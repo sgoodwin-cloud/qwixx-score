@@ -158,31 +158,23 @@ button:focus-visible{outline:3px solid var(--ink);outline-offset:2px}
 .score-table tr:first-child td{color:var(--muted)}
 .overflow{overflow-x:auto}
 
-/* portrait: still usable, but ask for landscape (iPhone ignores the manifest's orientation for home screen apps) */
-.rotate{display:none}
+/* Always landscape. Phones can't be forced to rotate a web page (iPhone never allows it; Android only
+   for an installed app), so when the phone reports portrait the whole stage is turned 90° clockwise:
+   held with the top of the phone to the left, it reads as landscape whether or not rotation lock is on.
+   Fixed toasts and dialogs live inside the stage, so they turn with it. */
+#stage{height:100%;position:relative}
 @media (orientation:portrait){
-  .rotate{display:flex;align-items:center;justify-content:center;gap:8px;flex:none;font-size:15px;font-weight:600;color:var(--muted)}
-  .rotate svg{width:20px;height:20px}
-  .boardwrap{align-items:center}
-  .sheet{flex:1 1 auto;height:min(56vh,360px)}
-  .lock{height:auto;width:min(13%,44px);align-self:center}
-  .lock .bonus{top:-8px;right:-6px;font-size:10px}
-  .sum{gap:3px}
-  .sum .op{display:none}
-  .chip{min-width:28px;font-size:16px;height:30px;padding:0 3px}
-  .chip.t{min-width:42px;height:34px;font-size:20px}
-  .pens{gap:4px}
-  .pen{width:32px;height:32px;font-size:13px}
-  .score{height:auto;flex-wrap:wrap;row-gap:8px;justify-content:space-between}
-  .score .spacer{display:none}
-  .ver{display:none}
-  .pill{padding:0 10px}
-  .menu{grid-template-columns:1fr}
+  #stage{position:fixed;top:0;left:0;width:100vh;width:100dvh;height:100vw;transform-origin:top left;transform:rotate(90deg) translateY(-100%)}
+  /* the stage's left edge is the phone's top (notch), its right edge the phone's bottom (home bar) */
+  .app{padding-left:max(16px,env(safe-area-inset-top,0px));padding-right:max(16px,env(safe-area-inset-bottom,0px))}
+  .toast{top:8px}
+  .scrim{padding:12px max(16px,env(safe-area-inset-bottom,0px)) 12px max(16px,env(safe-area-inset-top,0px))}
 }
 @media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
 </style>
 </head>
 <body>
+<div id="stage">
 <div class="app">
   <button id="update" type="button" hidden>Update ready — tap to update</button>
   <div class="top">
@@ -192,7 +184,6 @@ button:focus-visible{outline:3px solid var(--ink);outline-offset:2px}
     <button class="pill" id="settings" type="button" aria-label="Settings">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg>Settings</button>
   </div>
-  <div class="rotate"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="7" width="18" height="11" rx="2"/><path d="M8 3h8"/></svg>Turn your phone sideways for bigger boxes</div>
   <div class="boardwrap"><div class="sheet" id="sheet"></div></div>
   <div class="score">
     <div class="sum" id="sum"></div>
@@ -202,11 +193,12 @@ button:focus-visible{outline:3px solid var(--ink);outline-offset:2px}
 </div>
 <div class="toast" id="toast" role="status" aria-live="polite"></div>
 <div id="overlay" hidden></div>
+</div>
 
 <script>
 (function () {
   'use strict';
-  const APP_VERSION = '3';
+  const APP_VERSION = '4';
   const SAVE_VERSION = 1;
   const KEY = 'qwixx-score';
   const SHARE_URL = 'https://sgoodwin-cloud.github.io/qwixx-score/';
@@ -481,8 +473,8 @@ button:focus-visible{outline:3px solid var(--ink);outline-offset:2px}
     <p>Tap it again to clear it. Crosses clear from the right, so in a row you clear the rightmost cross first. Taken penalties and rows you closed for someone else clear the same way.</p>
     <h3>Do I need signal?</h3>
     <p>Only the first time you open it. After that it works offline, and your game is saved on this phone.</p>
-    <h3>The screen won’t turn sideways</h3>
-    <p>Swipe down from the top-right corner and turn off Portrait Orientation Lock.</p>`;
+    <h3>Which way up do I hold the phone?</h3>
+    <p>Sideways, with the top of the phone to your left. The sheet always shows in landscape, whether or not your phone\u2019s rotation lock is on.</p>`;
 
   function rules(faq) {
     openCard(`${header('Rules &amp; FAQ', 'no')}
@@ -505,7 +497,7 @@ button:focus-visible{outline:3px solid var(--ink);outline-offset:2px}
         <li>Open the link in <b>Safari</b> on an iPhone, or <b>Chrome</b> on Android.</li>
         <li>On iPhone, tap <b>Share</b>, then <b>Add to Home Screen</b>. On Android, tap the <b>⋮</b> menu, then <b>Add to home screen</b>.</li>
         <li>Open it once from the new icon while they have signal. After that it works offline.</li>
-        <li>Turn the phone sideways to play.</li>
+        <li>Hold the phone sideways, top to the left, to play.</li>
       </ol>`);
     $('no').onclick = settings;
     $('copy').onclick = () => {

@@ -1,6 +1,6 @@
 # Qwixx Score — design notes
 
-Last updated: 27 Oct 2026 (v3, on the `v2` test branch)
+Last updated: 27 Oct 2026 (v4, on the `v2` test branch)
 
 - Full design doc (Claude doc): https://claude.ai/artifact/YShyww3EHtMN2K7KNWo15Y
 - Design system: https://claude.ai/artifact/XMrnkNmjaX1AqYGjM2kxFz
@@ -11,7 +11,7 @@ Last updated: 27 Oct 2026 (v3, on the `v2` test branch)
 
 | Milestone | What | Status |
 | --- | --- | --- |
-| 1 | Classic board: crossing with rules enforced, undo, penalties, locks, score line, game end, settings with Rules & FAQ, Share, New game, End game; offline install and update bar | Live (v1); v2–v3 tweaks from play-test on the `v2` branch |
+| 1 | Classic board: crossing with rules enforced, undo, penalties, locks, score line, game end, settings with Rules & FAQ, Share, New game, End game; offline install and update bar | Live (v1); v2–v4 tweaks from play-test on the `v2` branch |
 | 2 | Board picker: Mixx A, Mixx B, Shuffle with board codes | Not started |
 | 3 | Big Points (six rows) | Not started |
 | 4 | Optional: paper tally mode, high score and history, dice roller | Not started |
@@ -68,7 +68,8 @@ Cross left to right; skipped cells grey out. The last cell needs 5 crosses in it
 
 ## Known limits
 
-- iPhone home-screen apps ignore the manifest's landscape setting, so the app also has a squeezed portrait layout with a "turn your phone sideways" prompt. Portrait Orientation Lock must be off to play in landscape.
+- Phones can't be made to rotate a web page (iPhone never; Android only for an installed app, via the manifest). So when the phone reports portrait, `#stage` (the whole app, including toasts and dialogs) is rotated 90° clockwise in CSS. Held with the top of the phone to the left, it reads as landscape whether or not rotation lock is on. Safe-area padding swaps sides in that mode (the notch is on the stage's left).
+- Scrolling inside a rotated dialog (Rules & FAQ) can only be checked on a real iPhone; headless Chromium has no WebKit.
 - `yellow-num` on `yellow-tint` is about 2.9:1; darken it if yellow numbers read faint on the phone.
 
 ## Decision log
@@ -76,6 +77,7 @@ Cross left to right; skipped cells grey out. The last cell needs 5 crosses in it
 | Date | Decision |
 | --- | --- |
 | 27 Oct 2026 | v1 released to `main` as the first release (Milestone 1) |
+| 27 Oct 2026 | v4: always landscape: the app rotates itself when the phone reports portrait; the squeezed portrait layout is gone (Stuart) |
 | 27 Oct 2026 | v3: no Undo button; tap a marked box, penalty or lock again to clear it (Stuart). Crosses clear from the right only, to keep the 5-cross rule safe |
 | 27 Oct 2026 | v2: lock closes a row in one tap, no confirm (Stuart); untaken penalty boxes are dashed outlines, taken ones solid red with a white X, so they can't be confused |
 | 27 Oct 2026 | Kept the confirm card when closing a row for another player; revisit after play-testing (replaced in v2) |
