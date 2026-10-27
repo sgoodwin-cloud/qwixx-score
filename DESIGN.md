@@ -1,6 +1,6 @@
 # Qwixx Score — design notes
 
-Last updated: 27 Oct 2026 (v5, live)
+Last updated: 27 Oct 2026 (v6, on the `v6` test branch)
 
 - Full design doc (Claude doc): https://claude.ai/artifact/YShyww3EHtMN2K7KNWo15Y
 - Design system: https://claude.ai/artifact/XMrnkNmjaX1AqYGjM2kxFz
@@ -77,6 +77,7 @@ Cross left to right; skipped cells grey out. The last cell needs 5 crosses in it
 | Date | Decision |
 | --- | --- |
 | 27 Oct 2026 | v1 released to `main` as the first release (Milestone 1) |
+| 27 Oct 2026 | v6: Share copies (and Send shares) a full message: the link plus iPhone and Android home-screen steps (Stuart) |
 | 27 Oct 2026 | v2–v5 merged to `main` after Stuart approved the preview |
 | 27 Oct 2026 | v5: the last number and its n/5 counter are stacked so the counter never overlaps the number |
 | 27 Oct 2026 | v4: always landscape: the app rotates itself when the phone reports portrait; the squeezed portrait layout is gone (Stuart) |
