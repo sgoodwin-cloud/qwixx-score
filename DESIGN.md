@@ -1,6 +1,6 @@
 # Qwixx Score — design notes
 
-Last updated: 27 Oct 2026 (v2, on the `v2` test branch)
+Last updated: 27 Oct 2026 (v3, on the `v2` test branch)
 
 - Full design doc (Claude doc): https://claude.ai/artifact/YShyww3EHtMN2K7KNWo15Y
 - Design system: https://claude.ai/artifact/XMrnkNmjaX1AqYGjM2kxFz
@@ -11,7 +11,7 @@ Last updated: 27 Oct 2026 (v2, on the `v2` test branch)
 
 | Milestone | What | Status |
 | --- | --- | --- |
-| 1 | Classic board: crossing with rules enforced, undo, penalties, locks, score line, game end, settings with Rules & FAQ, Share, New game, End game; offline install and update bar | Live (v1); v2 tweaks from play-test on the `v2` branch |
+| 1 | Classic board: crossing with rules enforced, undo, penalties, locks, score line, game end, settings with Rules & FAQ, Share, New game, End game; offline install and update bar | Live (v1); v2–v3 tweaks from play-test on the `v2` branch |
 | 2 | Board picker: Mixx A, Mixx B, Shuffle with board codes | Not started |
 | 3 | Big Points (six rows) | Not started |
 | 4 | Optional: paper tally mode, high score and history, dice roller | Not started |
@@ -51,11 +51,11 @@ Last updated: 27 Oct 2026 (v2, on the `v2` test branch)
 }
 ```
 
-Rows and cells are positions, not numbers, so the same format works for jumbled boards. Undo removes the last action. Future format changes go through `migrate()`.
+Rows and cells are positions, not numbers, so the same format works for jumbled boards. Clearing removes that item's action from the list. Future format changes go through `migrate()`.
 
 ## Rules the app enforces
 
-Cross left to right; skipped cells grey out. The last cell needs 5 crosses in its row; crossing it locks the row and adds a bonus cross. Rows closed by another player are closed with one tap on the lock (Undo reopens). Penalties −5 each. The game ends on your fourth penalty, the second closed row, or End game in Settings (for another player's fourth penalty). Row score = n(n+1)/2 for n crosses including the lock.
+Cross left to right; skipped cells grey out. The last cell needs 5 crosses in its row; crossing it locks the row and adds a bonus cross. Rows closed by another player are closed with one tap on the lock. Tapping anything already marked clears it: the rightmost cross in a row (so a lock can't be left without its 5), a taken penalty, or a row closed for someone else. A game ended from Settings can be resumed. Penalties −5 each. The game ends on your fourth penalty, the second closed row, or End game in Settings (for another player's fourth penalty). Row score = n(n+1)/2 for n crosses including the lock.
 
 ## Release process
 
@@ -76,6 +76,7 @@ Cross left to right; skipped cells grey out. The last cell needs 5 crosses in it
 | Date | Decision |
 | --- | --- |
 | 27 Oct 2026 | v1 released to `main` as the first release (Milestone 1) |
+| 27 Oct 2026 | v3: no Undo button; tap a marked box, penalty or lock again to clear it (Stuart). Crosses clear from the right only, to keep the 5-cross rule safe |
 | 27 Oct 2026 | v2: lock closes a row in one tap, no confirm (Stuart); untaken penalty boxes are dashed outlines, taken ones solid red with a white X, so they can't be confused |
 | 27 Oct 2026 | Kept the confirm card when closing a row for another player; revisit after play-testing (replaced in v2) |
 | 26 Oct 2026 | Board prototype approved: stretching cells; raised open tiles, sunk hatched skipped cells, inverted crossed cells, rising fill on the last number |

@@ -189,8 +189,6 @@ button:focus-visible{outline:3px solid var(--ink);outline-offset:2px}
     <span class="board-name" id="boardName">Classic</span>
     <span class="ver" id="ver"></span>
     <span class="spacer"></span>
-    <button class="pill" id="undo" type="button" aria-label="Undo last move">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M9 14 4 9l5-5"/><path d="M4 9h10.5a5.5 5.5 0 0 1 0 11H11"/></svg>Undo</button>
     <button class="pill" id="settings" type="button" aria-label="Settings">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg>Settings</button>
   </div>
@@ -208,7 +206,7 @@ button:focus-visible{outline:3px solid var(--ink);outline-offset:2px}
 <script>
 (function () {
   'use strict';
-  const APP_VERSION = '2';
+  const APP_VERSION = '3';
   const SAVE_VERSION = 1;
   const KEY = 'qwixx-score';
   const SHARE_URL = 'https://sgoodwin-cloud.github.io/qwixx-score/';
@@ -259,7 +257,7 @@ button:focus-visible{outline:3px solid var(--ink);outline-offset:2px}
     let pens = 0, ended = false;
     for (const a of acts) {
       if (a.type === 'cross') {
-        const r = rows[a.row]; r.crossed.add(a.cell); r.last = a.cell;
+        const r = rows[a.row]; r.crossed.add(a.cell); r.last = Math.max(r.last, a.cell);
         if (a.cell === last) { r.closed = true; r.mine = true; }
       } else if (a.type === 'closeRow') rows[a.row].closed = true;
       else if (a.type === 'penalty') pens++;
@@ -330,12 +328,11 @@ button:focus-visible{outline:3px solid var(--ink);outline-offset:2px}
       const on = i < st.pens;
       p.className = 'pen' + (on ? ' on' : '');
       p.innerHTML = on ? X_SVG : '−5';
-      p.setAttribute('aria-label', on ? `Penalty ${i + 1}, taken` : `Take penalty ${i + 1}`);
-      p.disabled = on || st.over;
-      p.addEventListener('click', () => { if (i === state().pens) act({ type: 'penalty' }, 'Penalty taken: −5'); });
+      p.setAttribute('aria-label', on ? `Penalty ${i + 1}, taken. Tap to remove` : `Take penalty ${i + 1}`);
+      p.disabled = !on && st.over;
+      p.addEventListener('click', () => tapPen(on));
       pens.appendChild(p);
     }
-    $('undo').disabled = game.actions.length === 0;
 
     if (st.over && !wasOver) setTimeout(showEnd, 350);
     wasOver = st.over;
@@ -349,10 +346,23 @@ button:focus-visible{outline:3px solid var(--ink);outline-offset:2px}
 
   /* ---------- Actions ---------- */
   function act(a, msg) { game.actions.push(a); save(); render(); if (msg) toast(msg); }
+  // Tapping something already marked clears it: remove its action (the latest matching one) from the history.
+  function unact(match, msg) {
+    for (let i = game.actions.length - 1; i >= 0; i--) {
+      if (match(game.actions[i])) { game.actions.splice(i, 1); break; }
+    }
+    save(); render(); if (msg) toast(msg);
+  }
 
   function tapCell(ri, ci, el) {
     const st = state(), row = board().rows[ri];
-    if (st.rows[ri].crossed.has(ci)) { toast('Already crossed. Use Undo to take it back'); return; }
+    if (st.rows[ri].crossed.has(ci)) {
+      // Only the rightmost cross in a row clears, so a lock can never be left without its 5 crosses.
+      if (ci !== st.rows[ri].last) { toast(`Clear the ${row.nums[st.rows[ri].last]} first: crosses clear from the right`); return; }
+      unact(a => a.type === 'cross' && a.row === ri && a.cell === ci,
+        ci === st.last ? `${cap(row.color)} lock cleared` : `Cleared ${row.color} ${row.nums[ci]}`);
+      return;
+    }
     const w = why(st, ri, ci);
     if (w) { el.classList.remove('shake'); void el.offsetWidth; el.classList.add('shake'); toast(w); return; }
     const skipped = row.nums.slice(st.rows[ri].last + 1, ci);
@@ -361,22 +371,22 @@ button:focus-visible{outline:3px solid var(--ink);outline-offset:2px}
     act({ type: 'cross', row: ri, cell: ci }, msg);
   }
 
-  // One tap closes the row for another player's lock; Undo reopens it.
+  // One tap closes the row for another player's lock; another tap reopens it.
   function tapLock(ri) {
-    const st = state(), row = board().rows[ri], color = row.color;
-    if (st.rows[ri].closed) { toast(`The ${color} row is closed`); return; }
+    const st = state(), r = st.rows[ri], row = board().rows[ri], color = row.color;
+    if (r.mine) { toast(`You locked ${color}. Tap the ${row.nums[st.last]} to clear it`); return; }
+    if (r.closed) { unact(a => a.type === 'closeRow' && a.row === ri, `${cap(color)} row reopened`); return; }
     if (st.over) { toast('The game is over'); return; }
-    act({ type: 'closeRow', row: ri }, `${cap(color)} row closed \u00b7 Undo to reopen`);
+    act({ type: 'closeRow', row: ri }, `${cap(color)} row closed \u00b7 tap the lock again to reopen`);
   }
 
-  function undo() {
-    if (!game.actions.length) return;
-    const a = game.actions.pop(), b = board();
-    save(); render();
-    const lbl = a.type === 'cross' ? `${b.rows[a.row].color} ${b.rows[a.row].nums[a.cell]}` :
-      a.type === 'closeRow' ? `${b.rows[a.row].color} row reopened` : a.type === 'penalty' ? 'penalty removed' : 'game resumed';
-    toast('Undone: ' + lbl);
+  function tapPen(on) {
+    if (on) { unact(a => a.type === 'penalty', 'Penalty removed'); return; }
+    if (state().over) { toast('The game is over'); return; }
+    act({ type: 'penalty' }, 'Penalty taken: \u22125');
   }
+
+  function resume() { unact(a => a.type === 'endGame', 'Game resumed'); }
 
   function newGame() { game = { saveVersion: SAVE_VERSION, board: { id: game.board.id, code: null }, actions: [] }; save(); render(); toast('New game'); }
 
@@ -395,11 +405,11 @@ button:focus-visible{outline:3px solid var(--ink);outline-offset:2px}
     if (!st.over) return;
     const reason = st.reason === 'pens' ? 'That’s your fourth penalty.' : st.reason === 'rows' ? 'Two rows are closed.' : 'Game ended.';
     openCard(`${header('Game over', 'no')}
-      <p>${reason} Your final score:</p>
+      <p>${reason} Your final score:</p>${st.reason === 'ended' ? '' : '<p class="hint">Made a mistake? View the sheet and tap a box or penalty again to clear it.</p>'}
       <div class="final">${scoreLine(st).replace(/<span class="op">(.)<\/span>/g, '$1')}</div>
-      <div class="btns"><button class="btn primary" type="button" id="new">New game</button><button class="btn" type="button" id="und">Undo last move</button><button class="btn" type="button" id="no2">View sheet</button></div>`);
+      <div class="btns"><button class="btn primary" type="button" id="new">New game</button>${st.reason === 'ended' ? '<button class="btn" type="button" id="und">Resume game</button>' : ''}<button class="btn" type="button" id="no2">View sheet</button></div>`);
     $('new').onclick = () => { closeCard(); newGame(); };
-    $('und').onclick = () => { closeCard(); undo(); };
+    if (st.reason === 'ended') $('und').onclick = () => { closeCard(); resume(); };
     $('no').onclick = $('no2').onclick = closeCard;
   }
 
@@ -410,7 +420,7 @@ button:focus-visible{outline:3px solid var(--ink);outline-offset:2px}
         <button class="btn" type="button" id="m-rules">Rules &amp; FAQ</button>
         <button class="btn" type="button" id="m-share">Share the app</button>
         <button class="btn" type="button" id="m-new">New game</button>
-        <button class="btn" type="button" id="m-end" ${st.over ? 'disabled' : ''}>End game</button>
+        ${st.reason === 'ended' ? '<button class="btn" type="button" id="m-end">Resume game</button>' : `<button class="btn" type="button" id="m-end" ${st.over ? 'disabled' : ''}>End game</button>`}
         <button class="btn" type="button" disabled>Board: ${board().name} <small>more boards coming</small></button>
       </div>
       <p class="hint">Qwixx Score v${APP_VERSION} · your game saves on this phone</p>`);
@@ -418,7 +428,8 @@ button:focus-visible{outline:3px solid var(--ink);outline-offset:2px}
     $('m-rules').onclick = () => rules(false);
     $('m-share').onclick = share;
     $('m-new').onclick = () => confirmBox('Start a new game?', 'This clears your sheet.', 'New game', newGame);
-    $('m-end').onclick = () => confirmBox('End the game?', 'Use this when another player takes their fourth penalty. You can undo it.', 'End game', () => act({ type: 'endGame' }));
+    $('m-end').onclick = st.reason === 'ended' ? () => { closeCard(); resume(); }
+      : () => confirmBox('End the game?', 'Use this when another player takes their fourth penalty. You can resume it from here.', 'End game', () => act({ type: 'endGame' }));
   }
 
   function confirmBox(title, body, label, fn) {
@@ -439,10 +450,10 @@ button:focus-visible{outline:3px solid var(--ink);outline-offset:2px}
     </ul>
     <h3>Crossing</h3>
     <ul>
-      <li>In each row, cross from left to right. You can skip numbers, but skipped numbers are gone for good. The app greys them out.</li>
+      <li>In each row, cross from left to right. You can skip numbers, but skipped numbers are gone for good. The app greys them out. Tapped the wrong box? Tap it again to clear it.</li>
       <li>Red and yellow run 2 to 12; green and blue run 12 to 2.</li>
       <li>The last number in a row (12 on red and yellow, 2 on green and blue) needs at least 5 crosses in that row first. Crossing it locks the row and also crosses the lock, a bonus cross.</li>
-      <li>When a row is locked, its die leaves the game and nobody can cross that colour again. If someone else locks a row, tap that row’s lock to close it on your sheet.</li>
+      <li>When a row is locked, its die leaves the game and nobody can cross that colour again. If someone else locks a row, tap that row’s lock to close it on your sheet (tap it again to reopen it).</li>
     </ul>
     <h3>End of the game</h3>
     <ul>
@@ -467,7 +478,7 @@ button:focus-visible{outline:3px solid var(--ink);outline-offset:2px}
     <h3>Why can’t I tap the last number?</h3>
     <p>You need 5 crosses in that row first. The counter on the box shows how many you have.</p>
     <h3>I tapped the wrong box</h3>
-    <p>Tap <b>Undo</b>. It takes back your last move, one at a time, including penalties and closed rows.</p>
+    <p>Tap it again to clear it. Crosses clear from the right, so in a row you clear the rightmost cross first. Taken penalties and rows you closed for someone else clear the same way.</p>
     <h3>Do I need signal?</h3>
     <p>Only the first time you open it. After that it works offline, and your game is saved on this phone.</p>
     <h3>The screen won’t turn sideways</h3>
@@ -517,7 +528,6 @@ button:focus-visible{outline:3px solid var(--ink);outline-offset:2px}
 
   /* ---------- Boot ---------- */
   $('ver').textContent = 'v' + APP_VERSION;
-  $('undo').addEventListener('click', undo);
   $('settings').addEventListener('click', settings);
   render();
 
