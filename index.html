@@ -71,9 +71,11 @@ button:focus-visible{outline:3px solid var(--ink);outline-offset:2px}
 /* Colour Mix: each run of same-coloured boxes sits on its own full-colour band, like a classic row,
    so the sections read at a glance; the lock sits on the colour of the last box */
 .row.mixed{background:var(--mixed);padding:0;gap:0}
-.seg{display:flex;align-items:stretch;min-width:0;gap:clamp(3px,.8cqw,8px);padding:clamp(3px,.7cqw,7px) clamp(3px,.55cqw,6px)}
+.seg{flex:1 1 0px;display:flex;align-items:stretch;min-width:0;gap:clamp(3px,.8cqw,8px);padding:clamp(3px,.7cqw,7px) clamp(3px,.55cqw,6px)}
 .seg.red{background:var(--red)} .seg.yellow{background:var(--yellow)} .seg.green{background:var(--green)} .seg.blue{background:var(--blue)}
-.seg:first-child{padding-left:clamp(4px,1cqw,10px)} .seg.lockseg{padding-left:0;padding-right:clamp(4px,1cqw,10px)}
+.seg:first-child{padding-left:clamp(4px,1cqw,10px)} .seg.lockseg{flex:0 0 auto;padding-left:0;padding-right:clamp(4px,1cqw,10px)}
+/* Safari can't size the round lock from its height inside a section, so give it an explicit size from the row height */
+.seg.lockseg .lock{height:calc(100cqh - 2 * clamp(3px,.7cqw,7px));width:calc(100cqh - 2 * clamp(3px,.7cqw,7px));align-self:center}
 .row.mixed + .row.mixed .seg{box-shadow:inset 0 1px 0 rgba(0,0,0,.18)}
 
 /* open: a raised tile */
@@ -222,7 +224,7 @@ button:focus-visible{outline:3px solid var(--ink);outline-offset:2px}
 <script>
 (function () {
   'use strict';
-  const APP_VERSION = '8';
+  const APP_VERSION = '9';
   const SAVE_VERSION = 1;
   const KEY = 'qwixx-score';
   const SHARE_URL = 'https://sgoodwin-cloud.github.io/qwixx-score/';
@@ -390,7 +392,7 @@ button:focus-visible{outline:3px solid var(--ink);outline-offset:2px}
           if (!el.lastChild || !el.lastChild.classList.contains(cc)) {
             const sg = document.createElement('div'); sg.className = 'seg ' + cc; el.appendChild(sg);
           }
-          el.lastChild.style.flex = `${el.lastChild.children.length + 1} 1 0`;
+          el.lastChild.style.flexGrow = el.lastChild.children.length + 1;
           el.lastChild.appendChild(c);
         } else el.appendChild(c);
       });
