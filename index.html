@@ -2,9 +2,580 @@
 <html lang="en-GB">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Qwixx Score</title>
-<style>body{margin:0;min-height:100vh;display:grid;place-items:center;background:#f3f1ec;color:#1d1f24;font:600 20px/1.4 system-ui,sans-serif;text-align:center;padding:16px}</style>
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="Qwixx">
+<meta name="theme-color" content="#f3f1ec">
+<style>
+/* Fonts are bundled in fonts/ so the app looks right offline (SIL Open Font Licence) */
+@font-face{font-family:"Barlow Semi Condensed";font-weight:500;font-display:swap;src:url(fonts/barlow-semi-condensed-latin-500-normal.woff2) format("woff2")}
+@font-face{font-family:"Barlow Semi Condensed";font-weight:600;font-display:swap;src:url(fonts/barlow-semi-condensed-latin-600-normal.woff2) format("woff2")}
+@font-face{font-family:"Barlow Semi Condensed";font-weight:700;font-display:swap;src:url(fonts/barlow-semi-condensed-latin-700-normal.woff2) format("woff2")}
+@font-face{font-family:"Barlow Semi Condensed";font-weight:800;font-display:swap;src:url(fonts/barlow-semi-condensed-latin-800-normal.woff2) format("woff2")}
+
+/* Light theme only, by choice: a score pad. Tokens from the Qwixx Score design system.
+   Layout: one landscape screen — top bar, four-row board filling the space, score line with penalties. */
+:root{
+  --paper:#f3f1ec; --sheet:#ffffff; --ink:#1d1f24; --muted:#8b8d93; --line:#c9c6bd;
+  --red:#d8392e;    --red-tint:#fbe3e0;    --red-deep:#9e2219;
+  --yellow:#efbc22; --yellow-tint:#fdf4d6; --yellow-deep:#8a6400; --yellow-num:#b98700;
+  --green:#1d8a3e;  --green-tint:#dff0e3;  --green-deep:#0f5a26;
+  --blue:#2b4f9e;   --blue-tint:#e2e8f5;   --blue-deep:#1a3470;
+  --lock-closed:#d9d7d0; --button:#ecebe6;
+  --font:"Barlow Semi Condensed","Arial Narrow",system-ui,sans-serif;
+  color-scheme:light;
+  padding-top:env(safe-area-inset-top,0px); padding-bottom:env(safe-area-inset-bottom,0px);
+}
+*{box-sizing:border-box}
+html,body{height:100%;margin:0}
+body{background:var(--paper);color:var(--ink);font-family:var(--font);overflow:hidden;
+  -webkit-user-select:none;user-select:none;-webkit-tap-highlight-color:transparent;-webkit-text-size-adjust:100%}
+[hidden]{display:none!important}
+button{font:inherit;color:inherit;touch-action:manipulation;cursor:pointer;border:0;background:none;padding:0}
+button:focus-visible{outline:3px solid var(--ink);outline-offset:2px}
+
+.app{height:100%;display:flex;flex-direction:column;gap:6px;
+  padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:6px}
+
+/* update bar: full width, top of the page, in normal flow (playbook) */
+#update{flex:none;display:block;width:100%;height:40px;border-radius:10px;background:var(--ink);color:#fff;font-weight:700;font-size:18px}
+#update:disabled{opacity:.7}
+
+/* top bar */
+.top{display:flex;align-items:center;gap:10px;flex:none;height:36px}
+.board-name{font-weight:700;font-size:20px;letter-spacing:.02em}
+.ver{font-size:12px;color:var(--muted);letter-spacing:.06em;text-transform:uppercase}
+.spacer{flex:1}
+.pill{display:flex;align-items:center;gap:6px;height:34px;padding:0 14px;border-radius:19px;background:var(--sheet);
+  border:1.5px solid var(--line);font-weight:600;font-size:17px}
+.pill svg{width:20px;height:20px}
+.pill:disabled{opacity:.35;cursor:default}
+.hint{font-size:14px;color:var(--muted)}
+
+/* board */
+.boardwrap{flex:1;min-height:0;display:flex;justify-content:center}
+.sheet{flex:1;max-width:1100px;max-height:420px;display:flex;flex-direction:column;border-radius:10px;overflow:hidden;
+  box-shadow:0 1px 0 rgba(0,0,0,.08),0 6px 18px rgba(30,25,10,.08)}
+.row{flex:1;min-height:0;display:flex;align-items:stretch;gap:clamp(3px,.8cqw,8px);padding:clamp(3px,.7cqw,7px) clamp(4px,1cqw,10px);container-type:size}
+.row.red{background:var(--red);--fill:var(--red);--on:#fff;--tint:var(--red-tint);--num:var(--red);--deep:var(--red-deep)}
+.row.yellow{background:var(--yellow);--fill:var(--yellow);--on:var(--ink);--tint:var(--yellow-tint);--num:var(--yellow-num);--deep:var(--yellow-deep)}
+.row.green{background:var(--green);--fill:var(--green);--on:#fff;--tint:var(--green-tint);--num:var(--green);--deep:var(--green-deep)}
+.row.blue{background:var(--blue);--fill:var(--blue);--on:#fff;--tint:var(--blue-tint);--num:var(--blue);--deep:var(--blue-deep)}
+
+/* open: a raised tile */
+.cell{flex:1 1 0;min-width:0;border-radius:clamp(5px,1.2cqw,9px);border:1px solid rgba(0,0,0,.2);
+  font-weight:800;font-size:min(62cqh,5cqw);font-variant-numeric:tabular-nums;line-height:1;
+  display:grid;place-items:center;position:relative;overflow:hidden;transition:transform .08s,box-shadow .08s;
+  color:var(--num);text-shadow:0 1px 0 #fff;
+  background:radial-gradient(120% 90% at 30% 15%,#fff 0%,rgba(255,255,255,0) 60%),linear-gradient(180deg,#fff 0%,var(--tint) 55%,var(--tint) 100%);
+  box-shadow:inset 0 1px 0 #fff,inset 0 -3px 0 rgba(0,0,0,.08),0 3px 0 var(--deep),0 5px 8px rgba(0,0,0,.22);
+  transform:translateY(-1.5px)}
+.cell:active{transform:translateY(1.5px);box-shadow:inset 0 1px 0 #fff,0 1px 0 var(--deep),0 2px 3px rgba(0,0,0,.2)}
+/* skipped or closed: pressed into the pad, hatched and drained of colour */
+.cell.gone{color:rgba(0,0,0,.2);text-shadow:0 1px 0 rgba(255,255,255,.5);transform:none;border-color:rgba(0,0,0,.12);
+  background:repeating-linear-gradient(135deg,rgba(0,0,0,.07) 0 2px,transparent 2px 7px),linear-gradient(180deg,rgba(0,0,0,.06),rgba(255,255,255,.1)),var(--tint);
+  box-shadow:inset 0 2px 5px rgba(0,0,0,.25),inset 0 -1px 0 rgba(255,255,255,.4);filter:saturate(.35);opacity:.8}
+.cell.gone:active{transform:none}
+/* crossed: inverted — row colour fill, white number (ink on yellow) */
+.cell.x{color:var(--on);transform:none;text-shadow:0 1px 0 rgba(0,0,0,.2);background:var(--fill);
+  border:2px solid rgba(255,255,255,.9);box-shadow:inset 0 2px 4px rgba(0,0,0,.28)}
+.cell.x:active{transform:none}
+/* last number waiting for 5 crosses: faded tile filling up from the bottom */
+.cell.wait{color:rgba(0,0,0,.25);text-shadow:none;transform:none;border:1.5px dashed rgba(0,0,0,.3);
+  background:linear-gradient(0deg,color-mix(in srgb,var(--num) 22%,transparent) calc(var(--p,0)*100%),transparent 0),var(--tint);
+  box-shadow:inset 0 1px 3px rgba(0,0,0,.12)}
+.cell.wait small{position:absolute;bottom:4%;font-size:min(20cqh,1.7cqw);font-weight:700;color:var(--deep);opacity:.7}
+.cell.shake{animation:shake .25s}
+@keyframes shake{25%{transform:translateX(-4px)}75%{transform:translateX(4px)}}
+
+.lock{flex:none;height:100%;aspect-ratio:1;border-radius:50%;margin-left:clamp(2px,.6cqw,6px);
+  background:radial-gradient(circle at 35% 30%,#fff,var(--button));border:1px solid rgba(0,0,0,.2);
+  box-shadow:0 3px 0 var(--deep),0 5px 8px rgba(0,0,0,.22);display:grid;place-items:center;position:relative;color:var(--num)}
+.lock svg{width:44%;height:44%}
+.lock.mine{background:var(--ink);color:#fff;box-shadow:inset 0 2px 4px rgba(0,0,0,.4)}
+.lock.theirs{background:var(--lock-closed);color:#55575c;box-shadow:inset 0 2px 5px rgba(0,0,0,.25)}
+.lock .bonus{position:absolute;top:-4px;right:-4px;background:var(--sheet);color:var(--ink);border:1.5px solid var(--ink);
+  border-radius:10px;font-size:12px;font-weight:700;padding:1px 5px}
+
+/* score line */
+.score{flex:none;display:flex;align-items:center;gap:8px;height:48px}
+.sum{display:flex;align-items:center;gap:5px;font-size:22px;font-weight:600;color:var(--muted)}
+.chip{min-width:42px;height:40px;padding:0 6px;border-radius:8px;border:2px solid;background:var(--sheet);
+  display:grid;place-items:center;font-size:22px;font-weight:700;font-variant-numeric:tabular-nums}
+.chip.r{border-color:var(--red);color:var(--red)} .chip.y{border-color:var(--yellow);color:var(--yellow-num)}
+.chip.g{border-color:var(--green);color:var(--green)} .chip.b{border-color:var(--blue);color:var(--blue)}
+.chip.p,.chip.t{border-color:var(--ink);color:var(--ink)}
+.chip.t{min-width:72px;height:44px;font-size:30px;font-weight:800}
+.pens{display:flex;align-items:center;gap:6px}
+.pen{width:46px;height:44px;border-radius:8px;border:2px solid var(--ink);background:var(--sheet);display:grid;place-items:center;
+  font-size:17px;font-weight:600;color:var(--muted)}
+.pen svg{width:60%;height:60%;color:var(--ink)}
+.pen:disabled{cursor:default}
+
+/* toast */
+.toast{position:fixed;left:50%;top:calc(env(safe-area-inset-top,0px) + 8px);transform:translateX(-50%);background:var(--ink);color:#fff;
+  padding:8px 16px;border-radius:20px;font-size:16px;font-weight:600;opacity:0;pointer-events:none;transition:opacity .2s;z-index:30;
+  white-space:nowrap;max-width:calc(100% - 32px);overflow:hidden;text-overflow:ellipsis}
+.toast.on{opacity:1}
+
+/* dialogs */
+.scrim{position:fixed;inset:0;background:rgba(20,18,12,.45);z-index:40;display:flex;align-items:center;justify-content:center;
+  padding:max(12px,env(safe-area-inset-top,0px)) max(16px,env(safe-area-inset-right,0px)) max(12px,env(safe-area-inset-bottom,0px)) max(16px,env(safe-area-inset-left,0px))}
+.card{background:var(--sheet);border-radius:14px;width:min(600px,100%);max-height:100%;overflow:auto;padding:16px 20px 18px;
+  display:flex;flex-direction:column;gap:12px;-webkit-user-select:text;user-select:text;-webkit-overflow-scrolling:touch}
+.card h2{margin:0;font-size:24px;font-weight:800}
+.card h3{margin:6px 0 0;font-size:15px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--muted)}
+.card p,.card li{font-size:17px;line-height:1.35;margin:0;font-weight:500}
+.card b{font-weight:700}
+.card ul,.card ol{margin:0;padding-left:22px;display:flex;flex-direction:column;gap:5px}
+.btns{display:flex;gap:10px;flex-wrap:wrap}
+.btn{height:44px;padding:0 18px;border-radius:10px;font-weight:700;font-size:18px;background:var(--button)}
+.btn.primary{background:var(--ink);color:#fff}
+.btn.danger{background:var(--red);color:#fff}
+.menu{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.menu .btn{height:52px;text-align:left;display:flex;align-items:center;gap:10px}
+.menu .btn:disabled{opacity:.45;cursor:default}
+.menu .btn small{font-weight:500;font-size:14px;color:var(--muted)}
+.final{display:flex;align-items:center;gap:6px;flex-wrap:wrap;font-size:20px;font-weight:600;color:var(--muted)}
+.topcard{display:flex;align-items:center;justify-content:space-between;gap:10px;position:sticky;top:-16px;background:var(--sheet);margin-top:-16px;padding-top:16px;z-index:1}
+.x-btn{width:40px;height:40px;border-radius:20px;background:var(--button);display:grid;place-items:center;flex:none}
+.x-btn svg{width:18px;height:18px}
+.tabs{display:flex;gap:6px}
+.tab{height:36px;padding:0 14px;border-radius:18px;background:var(--button);font-weight:700;font-size:16px}
+.tab[aria-selected="true"]{background:var(--ink);color:#fff}
+.field{width:100%;height:44px;border-radius:10px;border:1.5px solid var(--line);padding:0 12px;font:700 16px var(--font);color:var(--ink);background:var(--paper)}
+.status{font-size:15px;color:var(--green);min-height:18px}
+.score-table{border-collapse:collapse;font-size:16px;font-variant-numeric:tabular-nums}
+.score-table td{border:1px solid var(--line);padding:3px 7px;text-align:center}
+.score-table tr:first-child td{color:var(--muted)}
+.overflow{overflow-x:auto}
+
+/* portrait: still usable, but ask for landscape (iPhone ignores the manifest's orientation for home screen apps) */
+.rotate{display:none}
+@media (orientation:portrait){
+  .rotate{display:flex;align-items:center;justify-content:center;gap:8px;flex:none;font-size:15px;font-weight:600;color:var(--muted)}
+  .rotate svg{width:20px;height:20px}
+  .boardwrap{align-items:center}
+  .sheet{flex:1 1 auto;height:min(56vh,360px)}
+  .lock{height:auto;width:min(13%,44px);align-self:center}
+  .lock .bonus{top:-8px;right:-6px;font-size:10px}
+  .sum{gap:3px}
+  .sum .op{display:none}
+  .chip{min-width:28px;font-size:16px;height:30px;padding:0 3px}
+  .chip.t{min-width:42px;height:34px;font-size:20px}
+  .pens{gap:4px}
+  .pen{width:32px;height:32px;font-size:13px}
+  .score{height:auto;flex-wrap:wrap;row-gap:8px;justify-content:space-between}
+  .score .spacer{display:none}
+  .ver{display:none}
+  .pill{padding:0 10px}
+  .menu{grid-template-columns:1fr}
+}
+@media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
+</style>
 </head>
-<body><p>Qwixx Score is on its way.<br><small>Milestone 1 is being built.</small></p></body>
+<body>
+<div class="app">
+  <button id="update" type="button" hidden>Update ready — tap to update</button>
+  <div class="top">
+    <span class="board-name" id="boardName">Classic</span>
+    <span class="ver" id="ver"></span>
+    <span class="spacer"></span>
+    <button class="pill" id="undo" type="button" aria-label="Undo last move">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M9 14 4 9l5-5"/><path d="M4 9h10.5a5.5 5.5 0 0 1 0 11H11"/></svg>Undo</button>
+    <button class="pill" id="settings" type="button" aria-label="Settings">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg>Settings</button>
+  </div>
+  <div class="rotate"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="7" width="18" height="11" rx="2"/><path d="M8 3h8"/></svg>Turn your phone sideways for bigger boxes</div>
+  <div class="boardwrap"><div class="sheet" id="sheet"></div></div>
+  <div class="score">
+    <div class="sum" id="sum"></div>
+    <span class="spacer"></span>
+    <div class="pens" id="pens"></div>
+  </div>
+</div>
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+<div id="overlay" hidden></div>
+
+<script>
+(function () {
+  'use strict';
+  const APP_VERSION = '1';
+  const SAVE_VERSION = 1;
+  const KEY = 'qwixx-score';
+  const SHARE_URL = 'https://sgoodwin-cloud.github.io/qwixx-score/';
+  const SHARE_TEXT = 'Qwixx score sheet for your phone. Open it in Safari, tap Share, then Add to Home Screen.';
+
+  /* ---------- Boards are data: each row is a list of numbers plus its colour ---------- */
+  const BOARDS = {
+    classic: {
+      id: 'classic', name: 'Classic',
+      rows: [
+        { color: 'red',    nums: [2,3,4,5,6,7,8,9,10,11,12] },
+        { color: 'yellow', nums: [2,3,4,5,6,7,8,9,10,11,12] },
+        { color: 'green',  nums: [12,11,10,9,8,7,6,5,4,3,2] },
+        { color: 'blue',   nums: [12,11,10,9,8,7,6,5,4,3,2] }
+      ]
+    }
+  };
+  const TRI = n => n * (n + 1) / 2;
+  const $ = id => document.getElementById(id);
+  const cap = s => s[0].toUpperCase() + s.slice(1);
+
+  const X_SVG = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.4" stroke-linecap="round"><path d="M5 5l14 14M19 5 5 19"/></svg>';
+  const LOCK_OPEN = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="11" width="16" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 7.5-2"/></svg>';
+  const LOCK_SHUT = '<svg viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="11" width="16" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4" fill="none"/></svg>';
+  const CLOSE_SVG = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"><path d="M6 6l12 12M18 6 6 18"/></svg>';
+
+  /* ---------- Save: the list of actions; everything else is worked out from it ---------- */
+  function migrate(s) {
+    // Future save formats are upgraded here, never wiped.
+    if (!s || typeof s !== 'object' || !Array.isArray(s.actions)) return null;
+    if (s.saveVersion === 1) return s;
+    return null;
+  }
+  function load() {
+    try {
+      const s = migrate(JSON.parse(localStorage.getItem(KEY) || 'null'));
+      if (s && BOARDS[s.board && s.board.id]) return s;
+    } catch (e) { /* storage blocked or corrupt: start fresh */ }
+    return { saveVersion: SAVE_VERSION, board: { id: 'classic', code: null }, actions: [] };
+  }
+  let game = load();
+  const board = () => BOARDS[game.board.id];
+  function save() { try { localStorage.setItem(KEY, JSON.stringify(game)); } catch (e) { /* storage blocked */ } }
+
+  function derive(b, acts) {
+    const last = b.rows[0].nums.length - 1;
+    const rows = b.rows.map(() => ({ crossed: new Set(), last: -1, closed: false, mine: false }));
+    let pens = 0, ended = false;
+    for (const a of acts) {
+      if (a.type === 'cross') {
+        const r = rows[a.row]; r.crossed.add(a.cell); r.last = a.cell;
+        if (a.cell === last) { r.closed = true; r.mine = true; }
+      } else if (a.type === 'closeRow') rows[a.row].closed = true;
+      else if (a.type === 'penalty') pens++;
+      else if (a.type === 'endGame') ended = true;
+    }
+    const scores = rows.map(r => TRI(r.crossed.size + (r.mine ? 1 : 0)));
+    const closed = rows.filter(r => r.closed).length;
+    const reason = ended ? 'ended' : pens >= 4 ? 'pens' : closed >= 2 ? 'rows' : null;
+    const total = scores.reduce((a, c) => a + c, 0) - pens * 5;
+    return { rows, pens, scores, total, last, over: !!reason, reason };
+  }
+  const state = () => derive(board(), game.actions);
+
+  // Why a cell can't be crossed (null = it can)
+  function why(st, ri, ci) {
+    const r = st.rows[ri], color = board().rows[ri].color;
+    if (st.over) return 'The game is over';
+    if (r.closed) return `The ${color} row is closed`;
+    if (ci <= r.last) return 'Only numbers to the right of your last cross';
+    if (ci === st.last && r.crossed.size < 5) return `You need 5 ${color} crosses before the ${board().rows[ri].nums[ci]}`;
+    return null;
+  }
+
+  /* ---------- Render ---------- */
+  let wasOver = state().over;
+  function render() {
+    const b = board(), st = state();
+    $('boardName').textContent = b.name;
+    const sheet = $('sheet');
+    sheet.textContent = '';
+    b.rows.forEach((row, ri) => {
+      const r = st.rows[ri];
+      const el = document.createElement('div');
+      el.className = 'row ' + row.color;
+      row.nums.forEach((n, ci) => {
+        const c = document.createElement('button');
+        c.type = 'button'; c.className = 'cell'; c.textContent = n;
+        if (r.crossed.has(ci)) { c.classList.add('x'); c.setAttribute('aria-label', `${row.color} ${n}, crossed`); }
+        else {
+          c.setAttribute('aria-label', `${row.color} ${n}`);
+          if (r.closed || ci <= r.last) c.classList.add('gone');
+          else if (ci === st.last && r.crossed.size < 5) {
+            c.classList.add('wait'); c.style.setProperty('--p', r.crossed.size / 5);
+            c.insertAdjacentHTML('beforeend', `<small>${r.crossed.size}/5</small>`);
+          }
+        }
+        c.addEventListener('click', () => tapCell(ri, ci, c));
+        el.appendChild(c);
+      });
+      const lk = document.createElement('button');
+      lk.type = 'button';
+      lk.className = 'lock' + (r.mine ? ' mine' : r.closed ? ' theirs' : '');
+      lk.innerHTML = r.closed ? LOCK_SHUT : LOCK_OPEN;
+      if (r.mine) lk.insertAdjacentHTML('beforeend', '<span class="bonus">+1</span>');
+      lk.setAttribute('aria-label', r.closed ? `${row.color} row closed` : `Close ${row.color} row`);
+      lk.addEventListener('click', () => tapLock(ri));
+      el.appendChild(lk);
+      sheet.appendChild(el);
+    });
+
+    $('sum').innerHTML = scoreLine(st);
+
+    const pens = $('pens');
+    pens.textContent = '';
+    for (let i = 0; i < 4; i++) {
+      const p = document.createElement('button');
+      p.type = 'button'; p.className = 'pen';
+      const on = i < st.pens;
+      p.innerHTML = on ? X_SVG : '−5';
+      p.setAttribute('aria-label', on ? `Penalty ${i + 1}, taken` : `Take penalty ${i + 1}`);
+      p.disabled = on || st.over;
+      p.addEventListener('click', () => { if (i === state().pens) act({ type: 'penalty' }, 'Penalty taken: −5'); });
+      pens.appendChild(p);
+    }
+    $('undo').disabled = game.actions.length === 0;
+
+    if (st.over && !wasOver) setTimeout(showEnd, 350);
+    wasOver = st.over;
+  }
+  function scoreLine(st) {
+    const [r, y, g, b] = st.scores;
+    return `<span class="chip r">${r}</span><span class="op">+</span><span class="chip y">${y}</span><span class="op">+</span>` +
+      `<span class="chip g">${g}</span><span class="op">+</span><span class="chip b">${b}</span><span class="op">−</span>` +
+      `<span class="chip p">${st.pens * 5}</span><span class="op">=</span><span class="chip t">${st.total}</span>`;
+  }
+
+  /* ---------- Actions ---------- */
+  function act(a, msg) { game.actions.push(a); save(); render(); if (msg) toast(msg); }
+
+  function tapCell(ri, ci, el) {
+    const st = state(), row = board().rows[ri];
+    if (st.rows[ri].crossed.has(ci)) { toast('Already crossed. Use Undo to take it back'); return; }
+    const w = why(st, ri, ci);
+    if (w) { el.classList.remove('shake'); void el.offsetWidth; el.classList.add('shake'); toast(w); return; }
+    const skipped = row.nums.slice(st.rows[ri].last + 1, ci);
+    let msg = ci === st.last ? `${cap(row.color)} locked! +1 bonus cross` : `Crossed ${row.color} ${row.nums[ci]}`;
+    if (skipped.length) msg += ` · skipped ${skipped.join(', ')}`;
+    act({ type: 'cross', row: ri, cell: ci }, msg);
+  }
+
+  function tapLock(ri) {
+    const st = state(), row = board().rows[ri], color = row.color;
+    if (st.rows[ri].closed) { toast(`The ${color} row is closed`); return; }
+    if (st.over) { toast('The game is over'); return; }
+    openCard(`
+      <div class="topcard"><h2>Close the ${color} row?</h2></div>
+      <p>Use this when another player locks ${color}. You don’t get the lock cross, and you can’t cross any more ${color} numbers.</p>
+      <p>Locking it yourself? Tap the ${row.nums[st.last]} instead.</p>
+      <div class="btns"><button class="btn primary" type="button" id="ok">Close ${color} row</button><button class="btn" type="button" id="no">Cancel</button></div>`);
+    $('ok').onclick = () => { closeCard(); act({ type: 'closeRow', row: ri }, `${cap(color)} row closed`); };
+    $('no').onclick = closeCard;
+  }
+
+  function undo() {
+    if (!game.actions.length) return;
+    const a = game.actions.pop(), b = board();
+    save(); render();
+    const lbl = a.type === 'cross' ? `${b.rows[a.row].color} ${b.rows[a.row].nums[a.cell]}` :
+      a.type === 'closeRow' ? `${b.rows[a.row].color} row reopened` : a.type === 'penalty' ? 'penalty removed' : 'game resumed';
+    toast('Undone: ' + lbl);
+  }
+
+  function newGame() { game = { saveVersion: SAVE_VERSION, board: { id: game.board.id, code: null }, actions: [] }; save(); render(); toast('New game'); }
+
+  /* ---------- Dialogs ---------- */
+  const ov = $('overlay');
+  function openCard(html) {
+    ov.hidden = false;
+    ov.innerHTML = `<div class="scrim" id="scrim"><div class="card" role="dialog" aria-modal="true">${html}</div></div>`;
+    $('scrim').addEventListener('click', e => { if (e.target.id === 'scrim') closeCard(); });
+  }
+  function closeCard() { ov.hidden = true; ov.innerHTML = ''; }
+  const header = (title, id) => `<div class="topcard"><h2>${title}</h2><button class="x-btn" type="button" id="${id}" aria-label="Close">${CLOSE_SVG}</button></div>`;
+
+  function showEnd() {
+    const st = state();
+    if (!st.over) return;
+    const reason = st.reason === 'pens' ? 'That’s your fourth penalty.' : st.reason === 'rows' ? 'Two rows are closed.' : 'Game ended.';
+    openCard(`${header('Game over', 'no')}
+      <p>${reason} Your final score:</p>
+      <div class="final">${scoreLine(st).replace(/<span class="op">(.)<\/span>/g, '$1')}</div>
+      <div class="btns"><button class="btn primary" type="button" id="new">New game</button><button class="btn" type="button" id="und">Undo last move</button><button class="btn" type="button" id="no2">View sheet</button></div>`);
+    $('new').onclick = () => { closeCard(); newGame(); };
+    $('und').onclick = () => { closeCard(); undo(); };
+    $('no').onclick = $('no2').onclick = closeCard;
+  }
+
+  function settings() {
+    const st = state();
+    openCard(`${header('Settings', 'no')}
+      <div class="menu">
+        <button class="btn" type="button" id="m-rules">Rules &amp; FAQ</button>
+        <button class="btn" type="button" id="m-share">Share the app</button>
+        <button class="btn" type="button" id="m-new">New game</button>
+        <button class="btn" type="button" id="m-end" ${st.over ? 'disabled' : ''}>End game</button>
+        <button class="btn" type="button" disabled>Board: ${board().name} <small>more boards coming</small></button>
+      </div>
+      <p class="hint">Qwixx Score v${APP_VERSION} · your game saves on this phone</p>`);
+    $('no').onclick = closeCard;
+    $('m-rules').onclick = () => rules(false);
+    $('m-share').onclick = share;
+    $('m-new').onclick = () => confirmBox('Start a new game?', 'This clears your sheet.', 'New game', newGame);
+    $('m-end').onclick = () => confirmBox('End the game?', 'Use this when another player takes their fourth penalty. You can undo it.', 'End game', () => act({ type: 'endGame' }));
+  }
+
+  function confirmBox(title, body, label, fn) {
+    openCard(`<h2>${title}</h2><p>${body}</p>
+      <div class="btns"><button class="btn danger" type="button" id="ok">${label}</button><button class="btn" type="button" id="no">Cancel</button></div>`);
+    $('ok').onclick = () => { closeCard(); fn(); };
+    $('no').onclick = settings;
+  }
+
+  const RULES = `
+    <p>Everyone plays at once on their own sheet, so there’s no waiting. Each player uses this app on their own phone (or a paper sheet).</p>
+    <h3>Each roll</h3>
+    <ul>
+      <li>The active player rolls all six dice: two white and one each of red, yellow, green and blue.</li>
+      <li><b>Everyone</b> may cross the total of the two white dice in any one row. It’s optional.</li>
+      <li>The <b>active player</b> may then also cross one white die plus one coloured die, in that colour’s row.</li>
+      <li>If the active player crosses nothing at all on their turn, they take a penalty. Other players never take a penalty.</li>
+    </ul>
+    <h3>Crossing</h3>
+    <ul>
+      <li>In each row, cross from left to right. You can skip numbers, but skipped numbers are gone for good. The app greys them out.</li>
+      <li>Red and yellow run 2 to 12; green and blue run 12 to 2.</li>
+      <li>The last number in a row (12 on red and yellow, 2 on green and blue) needs at least 5 crosses in that row first. Crossing it locks the row and also crosses the lock, a bonus cross.</li>
+      <li>When a row is locked, its die leaves the game and nobody can cross that colour again. If someone else locks a row, tap that row’s lock to close it on your sheet.</li>
+    </ul>
+    <h3>End of the game</h3>
+    <ul>
+      <li>The game ends straight away when a player takes their fourth penalty, or when two rows are locked.</li>
+      <li>The app ends the game for your own fourth penalty or the second closed row. If another player takes their fourth penalty, use <b>End game</b> in Settings.</li>
+    </ul>
+    <h3>Scoring</h3>
+    <p>Each row scores by how many crosses it has, including the lock. Penalties are −5 each.</p>
+    <div class="overflow"><table class="score-table"><tr><td>Crosses</td>${[1,2,3,4,5,6,7,8,9,10,11,12].map(n => `<td>${n}</td>`).join('')}</tr>
+      <tr><td>Points</td>${[1,2,3,4,5,6,7,8,9,10,11,12].map(n => `<td>${TRI(n)}</td>`).join('')}</tr></table></div>
+    <p class="hint">Summarised in our own words from the Qwixx rules by Steffen Benndorf (Nürnberger-Spielkarten-Verlag).</p>`;
+
+  const FAQ = `
+    <h3>Can I cross on someone else’s turn?</h3>
+    <p>Yes, but only the white dice total. Coloured dice are for the active player only.</p>
+    <h3>Can the active player use both actions in the same row?</h3>
+    <p>Yes, as long as the white total comes first and both crosses go left to right.</p>
+    <h3>Can two players lock the same row on the same roll?</h3>
+    <p>Yes. If more than one player can cross the last number with the same roll, they can all lock it and all get the bonus cross.</p>
+    <h3>Does a row closed by someone else still score for me?</h3>
+    <p>Yes. You keep every cross you made in it; you just can’t add more.</p>
+    <h3>Why can’t I tap the last number?</h3>
+    <p>You need 5 crosses in that row first. The counter on the box shows how many you have.</p>
+    <h3>I tapped the wrong box</h3>
+    <p>Tap <b>Undo</b>. It takes back your last move, one at a time, including penalties and closed rows.</p>
+    <h3>Do I need signal?</h3>
+    <p>Only the first time you open it. After that it works offline, and your game is saved on this phone.</p>
+    <h3>The screen won’t turn sideways</h3>
+    <p>Swipe down from the top-right corner and turn off Portrait Orientation Lock.</p>`;
+
+  function rules(faq) {
+    openCard(`${header('Rules &amp; FAQ', 'no')}
+      <div class="tabs" role="tablist"><button class="tab" type="button" role="tab" id="t-r" aria-selected="${!faq}">Rules</button><button class="tab" type="button" role="tab" id="t-f" aria-selected="${faq}">FAQ</button></div>
+      ${faq ? FAQ : RULES}`);
+    $('no').onclick = settings;
+    $('t-r').onclick = () => rules(false);
+    $('t-f').onclick = () => rules(true);
+  }
+
+  function share() {
+    const canSend = (() => { try { return typeof navigator.share === 'function' && window.top === window.self; } catch (e) { return false; } })();
+    openCard(`${header('Share the app', 'no')}
+      <p>Every player needs Qwixx Score on their own phone. Send them this link. It’s free, with no account or app store.</p>
+      <input class="field" id="shareLink" readonly aria-label="App link" value="${SHARE_URL}">
+      <div class="btns"><button class="btn primary" type="button" id="copy">Copy link</button>${canSend ? '<button class="btn" type="button" id="send">Send…</button>' : ''}</div>
+      <p class="status" id="copyStatus" role="status"></p>
+      <h3>What they do next</h3>
+      <ol>
+        <li>Open the link in <b>Safari</b> on an iPhone, or <b>Chrome</b> on Android.</li>
+        <li>On iPhone, tap <b>Share</b>, then <b>Add to Home Screen</b>. On Android, tap the <b>⋮</b> menu, then <b>Add to home screen</b>.</li>
+        <li>Open it once from the new icon while they have signal. After that it works offline.</li>
+        <li>Turn the phone sideways to play.</li>
+      </ol>`);
+    $('no').onclick = settings;
+    $('copy').onclick = () => {
+      const done = () => { $('copy').textContent = 'Copied'; $('copyStatus').textContent = 'Link copied. Paste it into a message to send it.'; };
+      const fallback = () => {
+        const f = $('shareLink'); f.focus(); f.setSelectionRange(0, f.value.length);
+        try { if (document.execCommand('copy')) return done(); } catch (e) { /* not supported */ }
+        $('copyStatus').textContent = 'Couldn’t copy automatically. Tap the link above and choose Copy.';
+      };
+      try {
+        if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(SHARE_URL).then(done, fallback);
+        else fallback();
+      } catch (e) { fallback(); }
+    };
+    if (canSend) $('send').onclick = () => { try { navigator.share({ title: 'Qwixx Score', text: SHARE_TEXT, url: SHARE_URL }).catch(() => {}); } catch (e) { /* refused */ } };
+  }
+
+  let tt;
+  function toast(m) { const t = $('toast'); t.textContent = m; t.classList.add('on'); clearTimeout(tt); tt = setTimeout(() => t.classList.remove('on'), 1900); }
+
+  /* ---------- Boot ---------- */
+  $('ver').textContent = 'v' + APP_VERSION;
+  $('undo').addEventListener('click', undo);
+  $('settings').addEventListener('click', settings);
+  render();
+
+  // Self-test of the scoring and end rules (console only)
+  (function test() {
+    const b = BOARDS.classic;
+    const crossAll = (row, n) => Array.from({ length: n }, (_, i) => ({ type: 'cross', row, cell: i }));
+    let s = derive(b, [...crossAll(0, 5), { type: 'cross', row: 0, cell: 10 }]);
+    console.assert(s.scores[0] === 28 && s.rows[0].closed, 'red: 5 crosses + 12 + lock = 7 crosses = 28');
+    s = derive(b, [{ type: 'penalty' }, { type: 'penalty' }, { type: 'penalty' }, { type: 'penalty' }]);
+    console.assert(s.over && s.reason === 'pens' && s.total === -20, 'four penalties end the game at -20');
+    s = derive(b, [{ type: 'closeRow', row: 1 }, { type: 'closeRow', row: 3 }]);
+    console.assert(s.over && s.reason === 'rows' && s.total === 0, 'two closed rows end the game');
+    window.__qwixxTestsRan = true;
+  })();
+})();
+</script>
+
+<script>
+// Offline support + update bar (pattern proven in Flip 7 v5 and Pocket Factory)
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', async () => {
+    try {
+      // Only reload on a controller change if a worker was already running (an update), never on the very first install.
+      const hadController = !!navigator.serviceWorker.controller;
+      const reg = await navigator.serviceWorker.register('sw.js');
+      const btn = document.getElementById('update');
+      let reloading = false;
+      const reload = () => { if (!reloading) { reloading = true; location.reload(); } };
+      // Tap → tell the waiting worker to take over → reload only once it has actually switched on.
+      const show = w => {
+        btn.hidden = false;
+        btn.onclick = () => {
+          const nw = reg.waiting || w;
+          btn.textContent = 'Updating…'; btn.disabled = true;
+          if (!nw || nw.state === 'activated') return reload();
+          nw.addEventListener('statechange', () => { if (nw.state === 'activated') reload(); });
+          nw.postMessage('skipWaiting');
+          setTimeout(reload, 5000);
+        };
+      };
+      // Catch an update whatever stage it's at: already waiting, mid-download, or found later.
+      const track = w => {
+        if (!w) return;
+        const check = () => { if (w.state === 'installed' && navigator.serviceWorker.controller) show(w); };
+        check();
+        w.addEventListener('statechange', check);
+      };
+      track(reg.waiting);
+      track(reg.installing);
+      reg.addEventListener('updatefound', () => track(reg.installing));
+      reg.update().catch(() => {});
+      navigator.serviceWorker.addEventListener('controllerchange', () => { if (hadController) reload(); });
+      document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible') reg.update().catch(() => {}); });
+    } catch (e) { /* no service worker (e.g. artifact preview): app still works */ }
+  });
+}
+</script>
+</body>
 </html>
