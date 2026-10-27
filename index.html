@@ -153,10 +153,16 @@ button:focus-visible{outline:3px solid var(--ink);outline-offset:2px}
 .btn{height:44px;padding:0 18px;border-radius:10px;font-weight:700;font-size:18px;background:var(--button)}
 .btn.primary{background:var(--ink);color:#fff}
 .btn.danger{background:var(--red);color:#fff}
-.menu{display:grid;grid-template-columns:1fr 1fr;gap:10px}
-.menu .btn{height:52px;text-align:left;display:flex;align-items:center;gap:10px}
+/* Settings: the two everyday actions big, the rest a quieter row underneath */
+.menu{display:grid;gap:10px}
+.menu.main{grid-template-columns:1fr 1fr}
+.menu.main .btn{height:auto;min-height:76px;padding:12px 18px;text-align:left;display:flex;flex-direction:column;align-items:flex-start;justify-content:center;gap:2px}
+.menu.main .btn b{font-size:22px;font-weight:800}
+.menu.main .btn small{font-size:15px;font-weight:500;opacity:.75}
+.menu.main .btn.board{background:var(--sheet);border:2px solid var(--ink)}
+.menu.minor{grid-template-columns:repeat(3,1fr)}
+.menu.minor .btn{height:40px;font-size:16px;font-weight:600;background:transparent;border:1.5px solid var(--line);color:#55575c}
 .menu .btn:disabled{opacity:.45;cursor:default}
-.menu .btn small{font-weight:500;font-size:14px;color:var(--muted)}
 .final{display:flex;align-items:center;gap:6px;flex-wrap:wrap;font-size:20px;font-weight:600;color:var(--muted)}
 .topcard{display:flex;align-items:center;justify-content:space-between;gap:10px;position:sticky;top:-16px;background:var(--sheet);margin-top:-16px;padding-top:16px;z-index:1}
 .x-btn{width:40px;height:40px;border-radius:20px;background:var(--button);display:grid;place-items:center;flex:none}
@@ -224,7 +230,7 @@ button:focus-visible{outline:3px solid var(--ink);outline-offset:2px}
 <script>
 (function () {
   'use strict';
-  const APP_VERSION = '9';
+  const APP_VERSION = '10';
   const SAVE_VERSION = 1;
   const KEY = 'qwixx-score';
   const SHARE_URL = 'https://sgoodwin-cloud.github.io/qwixx-score/';
@@ -514,12 +520,14 @@ button:focus-visible{outline:3px solid var(--ink);outline-offset:2px}
   function settings() {
     const st = state();
     openCard(`${header('Settings', 'no')}
-      <div class="menu">
+      <div class="menu main">
+        <button class="btn primary" type="button" id="m-new"><b>New game</b><small>Same board, clear sheet</small></button>
+        <button class="btn board" type="button" id="m-board"><b>Change board</b><small>Playing: ${boardTitle(game.board)}</small></button>
+      </div>
+      <div class="menu minor">
         <button class="btn" type="button" id="m-rules">Rules &amp; FAQ</button>
         <button class="btn" type="button" id="m-share">Share the app</button>
-        <button class="btn" type="button" id="m-new">New game</button>
         ${st.reason === 'ended' ? '<button class="btn" type="button" id="m-end">Resume game</button>' : `<button class="btn" type="button" id="m-end" ${st.over ? 'disabled' : ''}>End game</button>`}
-        <button class="btn" type="button" id="m-board">Board: ${boardTitle(game.board)}</button>
       </div>
       <p class="hint">Qwixx Score v${APP_VERSION} · your game saves on this phone</p>`);
     $('no').onclick = closeCard;

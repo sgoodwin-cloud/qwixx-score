@@ -1,6 +1,6 @@
 # Qwixx Score — design notes
 
-Last updated: 27 Oct 2026 (v9, live)
+Last updated: 27 Oct 2026 (v10, on the `v10` test branch)
 
 - Full design doc (Claude doc): https://claude.ai/artifact/YShyww3EHtMN2K7KNWo15Y
 - Design system: https://claude.ai/artifact/XMrnkNmjaX1AqYGjM2kxFz
@@ -79,6 +79,7 @@ Cross left to right; skipped cells grey out. The last cell needs 5 crosses in it
 | Date | Decision |
 | --- | --- |
 | 27 Oct 2026 | v1 released to `main` as the first release (Milestone 1) |
+| 27 Oct 2026 | v10: Settings puts New game and Change board as two large buttons; Rules & FAQ, Share and End game in a quieter row below (Stuart) |
 | 27 Oct 2026 | Milestone 2 (v7–v9) merged to `main` after Stuart checked the preview on his iPhone |
 | 27 Oct 2026 | v9: Colour Mix sections sized with explicit flex values and the lock sized from the row height, because Safari left a wide empty band on the right (Chrome was fine) |
 | 27 Oct 2026 | v8: Colour Mix sections each sit on their own full-colour band (`.seg`), with the lock on its colour, so the colours read at a glance (Stuart) |
