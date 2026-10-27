@@ -1,6 +1,6 @@
 # Qwixx Score — design notes
 
-Last updated: 27 Oct 2026 (v6, live)
+Last updated: 27 Oct 2026 (v7, Milestone 2 on the `m2` test branch)
 
 - Full design doc (Claude doc): https://claude.ai/artifact/YShyww3EHtMN2K7KNWo15Y
 - Design system: https://claude.ai/artifact/XMrnkNmjaX1AqYGjM2kxFz
@@ -12,7 +12,7 @@ Last updated: 27 Oct 2026 (v6, live)
 | Milestone | What | Status |
 | --- | --- | --- |
 | 1 | Classic board: crossing with rules enforced, undo, penalties, locks, score line, game end, settings with Rules & FAQ, Share, New game, End game; offline install and update bar | Live (v6): v1 plus play-test tweaks (one-tap lock, clearer penalties, tap-again to clear, always landscape, share message with install steps) |
-| 2 | Board picker: Mixx A, Mixx B, Shuffle with board codes | Not started |
+| 2 | Board picker: Colour Mix, Number Mix, Shuffle with board codes | Built (v7) on `m2`, awaiting Stuart's play-test |
 | 3 | Big Points (six rows) | Not started |
 | 4 | Optional: paper tally mode, high score and history, dice roller | Not started |
 
@@ -28,7 +28,9 @@ Last updated: 27 Oct 2026 (v6, live)
 
 ## Code structure (`index.html`)
 
-- `BOARDS`: each board is a list of rows, each row a colour plus its numbers in order. Classic is the only board in v1. The rules only ever look at "the next cell to the right", so number order doesn't matter.
+- `BOARDS`: each board is a list of rows, each row a colour plus its numbers in order. Colour Mix rows are `mixed` and carry a `colors` list, one colour per box; the lock takes the last box's colour. Shuffle has no fixed rows: `shuffleBoard(code)` jumbles 2–12 per row with a PRNG seeded from the 4-character code, so the same code always gives the same sheet. `getBoard(game.board)` returns the board (cached). The rules only ever look at "the next cell to the right", so number order and colours don't matter to them.
+- Colour Mix and Number Mix are our own layouts that play like the official Qwixx Mixx pads, not copies of them.
+- Board picker (`boards()`, `pick()`): Settings → Board. Switching board starts a new game (asks first if the sheet has anything on it). New game keeps the current board and Shuffle code. Codes use `CODE_CHARS` (no O, I, 0, 1 and other look-alikes).
 - `game` (the save): `{ saveVersion, board: { id, code }, actions: [...] }`, stored in `localStorage` under `qwixx-score`.
 - `derive(board, actions)`: works out crosses, last cross per row, closed rows, own locks, penalties, row scores, total and whether the game is over (and why). Everything on screen comes from this.
 - `why(state, row, cell)`: the reason a cell can't be crossed, or null.
@@ -41,7 +43,7 @@ Last updated: 27 Oct 2026 (v6, live)
 ```json
 {
   "saveVersion": 1,
-  "board": { "id": "classic", "code": null },
+  "board": { "id": "classic", "code": null },          // or { "id": "shuffle", "code": "K7Q2" }
   "actions": [
     { "type": "cross", "row": 0, "cell": 3 },
     { "type": "closeRow", "row": 2 },
@@ -77,6 +79,7 @@ Cross left to right; skipped cells grey out. The last cell needs 5 crosses in it
 | Date | Decision |
 | --- | --- |
 | 27 Oct 2026 | v1 released to `main` as the first release (Milestone 1) |
+| 27 Oct 2026 | v7 (Milestone 2): board picker with Colour Mix, Number Mix and Shuffle (4-character codes); original layouts rather than copies of the Mixx pads; Colour Mix rows on a dark band with ink score chips |
 | 27 Oct 2026 | v6: Share copies (and Send shares) a full message: the link plus iPhone and Android home-screen steps (Stuart) |
 | 27 Oct 2026 | v2–v5 merged to `main` after Stuart approved the preview |
 | 27 Oct 2026 | v5: the last number and its n/5 counter are stacked so the counter never overlaps the number |

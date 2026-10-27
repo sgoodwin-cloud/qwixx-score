@@ -26,7 +26,7 @@
   --yellow:#efbc22; --yellow-tint:#fdf4d6; --yellow-deep:#8a6400; --yellow-num:#b98700;
   --green:#1d8a3e;  --green-tint:#dff0e3;  --green-deep:#0f5a26;
   --blue:#2b4f9e;   --blue-tint:#e2e8f5;   --blue-deep:#1a3470;
-  --lock-closed:#d9d7d0; --button:#ecebe6;
+  --lock-closed:#d9d7d0; --button:#ecebe6; --mixed:#4a4c54;
   --font:"Barlow Semi Condensed","Arial Narrow",system-ui,sans-serif;
   color-scheme:light;
   padding-top:env(safe-area-inset-top,0px); padding-bottom:env(safe-area-inset-bottom,0px);
@@ -62,10 +62,14 @@ button:focus-visible{outline:3px solid var(--ink);outline-offset:2px}
 .sheet{flex:1;max-width:1100px;max-height:420px;display:flex;flex-direction:column;border-radius:10px;overflow:hidden;
   box-shadow:0 1px 0 rgba(0,0,0,.08),0 6px 18px rgba(30,25,10,.08)}
 .row{flex:1;min-height:0;display:flex;align-items:stretch;gap:clamp(3px,.8cqw,8px);padding:clamp(3px,.7cqw,7px) clamp(4px,1cqw,10px);container-type:size}
-.row.red{background:var(--red);--fill:var(--red);--on:#fff;--tint:var(--red-tint);--num:var(--red);--deep:var(--red-deep)}
-.row.yellow{background:var(--yellow);--fill:var(--yellow);--on:var(--ink);--tint:var(--yellow-tint);--num:var(--yellow-num);--deep:var(--yellow-deep)}
-.row.green{background:var(--green);--fill:var(--green);--on:#fff;--tint:var(--green-tint);--num:var(--green);--deep:var(--green-deep)}
-.row.blue{background:var(--blue);--fill:var(--blue);--on:#fff;--tint:var(--blue-tint);--num:var(--blue);--deep:var(--blue-deep)}
+/* colour classes set the tile colours on rows, cells and locks; in Colour Mix each cell carries its own */
+.red{--fill:var(--red);--on:#fff;--tint:var(--red-tint);--num:var(--red);--deep:var(--red-deep)}
+.yellow{--fill:var(--yellow);--on:var(--ink);--tint:var(--yellow-tint);--num:var(--yellow-num);--deep:var(--yellow-deep)}
+.green{--fill:var(--green);--on:#fff;--tint:var(--green-tint);--num:var(--green);--deep:var(--green-deep)}
+.blue{--fill:var(--blue);--on:#fff;--tint:var(--blue-tint);--num:var(--blue);--deep:var(--blue-deep)}
+.row.red{background:var(--red)} .row.yellow{background:var(--yellow)} .row.green{background:var(--green)} .row.blue{background:var(--blue)}
+.row.mixed{background:var(--mixed)}
+.row.mixed + .row.mixed{box-shadow:inset 0 1px 0 rgba(255,255,255,.12)}
 
 /* open: a raised tile */
 .cell{flex:1 1 0;min-width:0;border-radius:clamp(5px,1.2cqw,9px);border:1px solid rgba(0,0,0,.2);
@@ -111,7 +115,7 @@ button:focus-visible{outline:3px solid var(--ink);outline-offset:2px}
   display:grid;place-items:center;font-size:22px;font-weight:700;font-variant-numeric:tabular-nums}
 .chip.r{border-color:var(--red);color:var(--red)} .chip.y{border-color:var(--yellow);color:var(--yellow-num)}
 .chip.g{border-color:var(--green);color:var(--green)} .chip.b{border-color:var(--blue);color:var(--blue)}
-.chip.p,.chip.t{border-color:var(--ink);color:var(--ink)}
+.chip.p,.chip.t,.chip.m{border-color:var(--ink);color:var(--ink)}
 .chip.t{min-width:72px;height:44px;font-size:30px;font-weight:800}
 .pens{display:flex;align-items:center;gap:6px}
 .pen{width:46px;height:44px;border-radius:8px;border:2px dashed var(--muted);background:transparent;display:grid;place-items:center;
@@ -156,6 +160,18 @@ button:focus-visible{outline:3px solid var(--ink);outline-offset:2px}
 .field{width:100%;height:44px;border-radius:10px;border:1.5px solid var(--line);padding:0 12px;font:700 16px var(--font);color:var(--ink);background:var(--paper)}
 .field.message{height:auto;padding:10px 12px;font:500 15px/1.35 var(--font);resize:none;white-space:pre-wrap}
 .status{font-size:15px;color:var(--green);min-height:18px}
+.status.err{color:var(--red-deep);min-height:0}
+.board-list{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.board-opt{display:flex;flex-direction:column;align-items:flex-start;gap:2px;text-align:left;padding:9px 12px;border-radius:12px;
+  background:var(--paper);border:2px solid var(--line)}
+.board-opt b{font-size:18px;font-weight:800}
+.board-opt span{font-size:14px;line-height:1.25;color:#55575c;font-weight:500}
+.board-opt.on{border-color:var(--ink)}
+.board-opt .cur{font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--green)}
+.board-opt.shuffle{grid-column:1/-1}
+.code-row{display:flex;gap:8px;align-items:center;margin-top:4px;flex-wrap:wrap}
+.code-row .btn:not(.primary){background:var(--sheet);border:1.5px solid var(--line)}
+.field.code{width:96px;text-align:center;letter-spacing:.2em;text-transform:uppercase;font-size:18px}
 .score-table{border-collapse:collapse;font-size:16px;font-variant-numeric:tabular-nums}
 .score-table td{border:1px solid var(--line);padding:3px 7px;text-align:center}
 .score-table tr:first-child td{color:var(--muted)}
@@ -201,7 +217,7 @@ button:focus-visible{outline:3px solid var(--ink);outline-offset:2px}
 <script>
 (function () {
   'use strict';
-  const APP_VERSION = '6';
+  const APP_VERSION = '7';
   const SAVE_VERSION = 1;
   const KEY = 'qwixx-score';
   const SHARE_URL = 'https://sgoodwin-cloud.github.io/qwixx-score/';
@@ -216,18 +232,72 @@ button:focus-visible{outline:3px solid var(--ink);outline-offset:2px}
   ].join('\n');
   const SHARE_MESSAGE = `${SHARE_INTRO}\n\n${SHARE_URL}\n\n${SHARE_STEPS}`;
 
-  /* ---------- Boards are data: each row is a list of numbers plus its colour ---------- */
+  /* ---------- Boards are data: each row is its numbers in order plus a colour ----------
+     Colour Mix rows are 'mixed' and give each box its own colour in `colors`. Colour Mix and Number Mix
+     are our own layouts in the spirit of the official Qwixx Mixx pads, not copies of them. */
+  const ASC = [2,3,4,5,6,7,8,9,10,11,12], DESC = ASC.slice().reverse();
+  const seg = (...parts) => parts.flatMap(([c, n]) => Array(n).fill(c));
   const BOARDS = {
     classic: {
-      id: 'classic', name: 'Classic',
+      id: 'classic', name: 'Classic', blurb: 'The standard sheet.',
       rows: [
-        { color: 'red',    nums: [2,3,4,5,6,7,8,9,10,11,12] },
-        { color: 'yellow', nums: [2,3,4,5,6,7,8,9,10,11,12] },
-        { color: 'green',  nums: [12,11,10,9,8,7,6,5,4,3,2] },
-        { color: 'blue',   nums: [12,11,10,9,8,7,6,5,4,3,2] }
+        { color: 'red',    nums: ASC },
+        { color: 'yellow', nums: ASC },
+        { color: 'green',  nums: DESC },
+        { color: 'blue',   nums: DESC }
       ]
-    }
+    },
+    colourmix: {
+      id: 'colourmix', name: 'Colour Mix', blurb: 'Usual number order, but each row is split into coloured sections.',
+      rows: [
+        { color: 'mixed', nums: ASC,  colors: seg(['red', 3], ['yellow', 3], ['green', 3], ['blue', 2]) },
+        { color: 'mixed', nums: ASC,  colors: seg(['yellow', 2], ['blue', 3], ['red', 3], ['green', 3]) },
+        { color: 'mixed', nums: DESC, colors: seg(['green', 3], ['red', 2], ['blue', 3], ['yellow', 3]) },
+        { color: 'mixed', nums: DESC, colors: seg(['blue', 3], ['green', 3], ['yellow', 2], ['red', 3]) }
+      ]
+    },
+    numbermix: {
+      id: 'numbermix', name: 'Number Mix', blurb: 'One colour per row, but the numbers are jumbled.',
+      rows: [
+        { color: 'red',    nums: [7,3,11,5,9,2,12,6,4,10,8] },
+        { color: 'yellow', nums: [10,4,8,12,2,6,9,3,11,7,5] },
+        { color: 'green',  nums: [5,9,2,7,12,4,10,8,3,6,11] },
+        { color: 'blue',   nums: [8,12,6,3,10,7,2,11,5,9,4] }
+      ]
+    },
+    shuffle: { id: 'shuffle', name: 'Shuffle', blurb: 'A fresh jumble of numbers. One player starts it and shares the code; the others join with it.' }
   };
+  const BOARD_ORDER = ['classic', 'colourmix', 'numbermix', 'shuffle'];
+
+  // Shuffle: a 4-character code seeds the jumble, so everyone who enters the same code gets the same sheet.
+  const CODE_CHARS = 'ACDEFHJKLMNPRTVWXY34679';
+  const validCode = c => typeof c === 'string' && c.length === 4 && [...c].every(ch => CODE_CHARS.includes(ch));
+  function newCode() {
+    const r = new Uint32Array(4);
+    try { crypto.getRandomValues(r); } catch (e) { for (let i = 0; i < 4; i++) r[i] = Math.floor(Math.random() * 1e9); }
+    return [...r].map(x => CODE_CHARS[x % CODE_CHARS.length]).join('');
+  }
+  function seeded(code) {
+    let h = 2166136261;
+    for (const ch of 'qwixx-' + code) { h ^= ch.charCodeAt(0); h = Math.imul(h, 16777619); }
+    return () => { h = (h + 0x6D2B79F5) | 0; let t = Math.imul(h ^ (h >>> 15), 1 | h); t ^= t + Math.imul(t ^ (t >>> 7), 61 | t); return ((t ^ (t >>> 14)) >>> 0) / 4294967296; };
+  }
+  function shuffleBoard(code) {
+    const rnd = seeded(code);
+    const jumble = () => { const a = ASC.slice(); for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(rnd() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; };
+    return { id: 'shuffle', name: 'Shuffle', code, rows: ['red', 'yellow', 'green', 'blue'].map(color => ({ color, nums: jumble() })) };
+  }
+  const validBoard = gb => !!gb && (gb.id === 'shuffle' ? validCode(gb.code) : !!BOARDS[gb.id] && gb.id !== 'shuffle');
+  let boardCache = null;
+  function getBoard(gb) {
+    const key = gb.id + ':' + (gb.code || '');
+    if (!boardCache || boardCache.key !== key) boardCache = { key, b: gb.id === 'shuffle' ? shuffleBoard(gb.code) : BOARDS[gb.id] };
+    return boardCache.b;
+  }
+  const cellColor = (row, ci) => row.colors ? row.colors[ci] : row.color;
+  const rowLabel = (row, ri) => row.color === 'mixed' ? `row ${ri + 1}` : `${row.color} row`;
+  const boardTitle = gb => gb.id === 'shuffle' ? `Shuffle \u00b7 ${gb.code}` : BOARDS[gb.id].name;
+
   const TRI = n => n * (n + 1) / 2;
   const $ = id => document.getElementById(id);
   const cap = s => s[0].toUpperCase() + s.slice(1);
@@ -247,12 +317,12 @@ button:focus-visible{outline:3px solid var(--ink);outline-offset:2px}
   function load() {
     try {
       const s = migrate(JSON.parse(localStorage.getItem(KEY) || 'null'));
-      if (s && BOARDS[s.board && s.board.id]) return s;
+      if (s && validBoard(s.board)) return s;
     } catch (e) { /* storage blocked or corrupt: start fresh */ }
     return { saveVersion: SAVE_VERSION, board: { id: 'classic', code: null }, actions: [] };
   }
   let game = load();
-  const board = () => BOARDS[game.board.id];
+  const board = () => getBoard(game.board);
   function save() { try { localStorage.setItem(KEY, JSON.stringify(game)); } catch (e) { /* storage blocked */ } }
 
   function derive(b, acts) {
@@ -277,11 +347,11 @@ button:focus-visible{outline:3px solid var(--ink);outline-offset:2px}
 
   // Why a cell can't be crossed (null = it can)
   function why(st, ri, ci) {
-    const r = st.rows[ri], color = board().rows[ri].color;
+    const r = st.rows[ri], row = board().rows[ri], label = rowLabel(row, ri);
     if (st.over) return 'The game is over';
-    if (r.closed) return `The ${color} row is closed`;
+    if (r.closed) return `The ${label} is closed`;
     if (ci <= r.last) return 'Only numbers to the right of your last cross';
-    if (ci === st.last && r.crossed.size < 5) return `You need 5 ${color} crosses before the ${board().rows[ri].nums[ci]}`;
+    if (ci === st.last && r.crossed.size < 5) return `You need 5 crosses in the ${label} before the ${row.nums[ci]}`;
     return null;
   }
 
@@ -289,7 +359,7 @@ button:focus-visible{outline:3px solid var(--ink);outline-offset:2px}
   let wasOver = state().over;
   function render() {
     const b = board(), st = state();
-    $('boardName').textContent = b.name;
+    $('boardName').textContent = boardTitle(game.board);
     const sheet = $('sheet');
     sheet.textContent = '';
     b.rows.forEach((row, ri) => {
@@ -298,10 +368,11 @@ button:focus-visible{outline:3px solid var(--ink);outline-offset:2px}
       el.className = 'row ' + row.color;
       row.nums.forEach((n, ci) => {
         const c = document.createElement('button');
-        c.type = 'button'; c.className = 'cell'; c.textContent = n;
-        if (r.crossed.has(ci)) { c.classList.add('x'); c.setAttribute('aria-label', `${row.color} ${n}, crossed`); }
+        const cc = cellColor(row, ci);
+        c.type = 'button'; c.className = 'cell ' + cc; c.textContent = n;
+        if (r.crossed.has(ci)) { c.classList.add('x'); c.setAttribute('aria-label', `${cc} ${n}, crossed`); }
         else {
-          c.setAttribute('aria-label', `${row.color} ${n}`);
+          c.setAttribute('aria-label', `${cc} ${n}`);
           if (r.closed || ci <= r.last) c.classList.add('gone');
           else if (ci === st.last && r.crossed.size < 5) {
             c.classList.add('wait'); c.style.setProperty('--p', r.crossed.size / 5);
@@ -313,16 +384,16 @@ button:focus-visible{outline:3px solid var(--ink);outline-offset:2px}
       });
       const lk = document.createElement('button');
       lk.type = 'button';
-      lk.className = 'lock' + (r.mine ? ' mine' : r.closed ? ' theirs' : '');
+      lk.className = 'lock ' + cellColor(row, st.last) + (r.mine ? ' mine' : r.closed ? ' theirs' : '');
       lk.innerHTML = r.closed ? LOCK_SHUT : LOCK_OPEN;
       if (r.mine) lk.insertAdjacentHTML('beforeend', '<span class="bonus">+1</span>');
-      lk.setAttribute('aria-label', r.closed ? `${row.color} row closed` : `Close ${row.color} row`);
+      lk.setAttribute('aria-label', r.closed ? `${rowLabel(row, ri)} closed` : `Close ${rowLabel(row, ri)}`);
       lk.addEventListener('click', () => tapLock(ri));
       el.appendChild(lk);
       sheet.appendChild(el);
     });
 
-    $('sum').innerHTML = scoreLine(st);
+    $('sum').innerHTML = scoreLine(st, b);
 
     const pens = $('pens');
     pens.textContent = '';
@@ -341,10 +412,10 @@ button:focus-visible{outline:3px solid var(--ink);outline-offset:2px}
     if (st.over && !wasOver) setTimeout(showEnd, 350);
     wasOver = st.over;
   }
-  function scoreLine(st) {
-    const [r, y, g, b] = st.scores;
-    return `<span class="chip r">${r}</span><span class="op">+</span><span class="chip y">${y}</span><span class="op">+</span>` +
-      `<span class="chip g">${g}</span><span class="op">+</span><span class="chip b">${b}</span><span class="op">−</span>` +
+  // Row scores as chips in each row's colour (ink for Colour Mix rows), then penalties and total
+  function scoreLine(st, b) {
+    const CH = { red: 'r', yellow: 'y', green: 'g', blue: 'b', mixed: 'm' };
+    return st.scores.map((v, i) => `<span class="chip ${CH[b.rows[i].color]}">${v}</span>`).join('<span class="op">+</span>') + '<span class="op">\u2212</span>' +
       `<span class="chip p">${st.pens * 5}</span><span class="op">=</span><span class="chip t">${st.total}</span>`;
   }
 
@@ -364,24 +435,25 @@ button:focus-visible{outline:3px solid var(--ink);outline-offset:2px}
       // Only the rightmost cross in a row clears, so a lock can never be left without its 5 crosses.
       if (ci !== st.rows[ri].last) { toast(`Clear the ${row.nums[st.rows[ri].last]} first: crosses clear from the right`); return; }
       unact(a => a.type === 'cross' && a.row === ri && a.cell === ci,
-        ci === st.last ? `${cap(row.color)} lock cleared` : `Cleared ${row.color} ${row.nums[ci]}`);
+        ci === st.last ? `${cap(rowLabel(row, ri))} lock cleared` : `Cleared ${cellColor(row, ci)} ${row.nums[ci]}`);
       return;
     }
     const w = why(st, ri, ci);
     if (w) { el.classList.remove('shake'); void el.offsetWidth; el.classList.add('shake'); toast(w); return; }
     const skipped = row.nums.slice(st.rows[ri].last + 1, ci);
-    let msg = ci === st.last ? `${cap(row.color)} locked! +1 bonus cross` : `Crossed ${row.color} ${row.nums[ci]}`;
+    let msg = ci === st.last ? `${cap(rowLabel(row, ri))} locked! +1 bonus cross` + (row.colors ? ` \u00b7 the ${cellColor(row, ci)} die is out` : '')
+      : `Crossed ${cellColor(row, ci)} ${row.nums[ci]}`;
     if (skipped.length) msg += ` · skipped ${skipped.join(', ')}`;
     act({ type: 'cross', row: ri, cell: ci }, msg);
   }
 
   // One tap closes the row for another player's lock; another tap reopens it.
   function tapLock(ri) {
-    const st = state(), r = st.rows[ri], row = board().rows[ri], color = row.color;
-    if (r.mine) { toast(`You locked ${color}. Tap the ${row.nums[st.last]} to clear it`); return; }
-    if (r.closed) { unact(a => a.type === 'closeRow' && a.row === ri, `${cap(color)} row reopened`); return; }
+    const st = state(), r = st.rows[ri], row = board().rows[ri], label = rowLabel(row, ri);
+    if (r.mine) { toast(`You locked the ${label}. Tap the ${row.nums[st.last]} to clear it`); return; }
+    if (r.closed) { unact(a => a.type === 'closeRow' && a.row === ri, `${cap(label)} reopened`); return; }
     if (st.over) { toast('The game is over'); return; }
-    act({ type: 'closeRow', row: ri }, `${cap(color)} row closed \u00b7 tap the lock again to reopen`);
+    act({ type: 'closeRow', row: ri }, `${cap(label)} closed \u00b7 tap the lock again to reopen`);
   }
 
   function tapPen(on) {
@@ -392,7 +464,12 @@ button:focus-visible{outline:3px solid var(--ink);outline-offset:2px}
 
   function resume() { unact(a => a.type === 'endGame', 'Game resumed'); }
 
-  function newGame() { game = { saveVersion: SAVE_VERSION, board: { id: game.board.id, code: null }, actions: [] }; save(); render(); toast('New game'); }
+  // A new game keeps the current board (and Shuffle code); switching board always starts a new game.
+  function newGame(pick) {
+    const gb = pick || game.board;
+    game = { saveVersion: SAVE_VERSION, board: { id: gb.id, code: gb.id === 'shuffle' ? gb.code : null }, actions: [] };
+    save(); render(); toast(pick ? `New game on ${boardTitle(game.board)}` : 'New game');
+  }
 
   /* ---------- Dialogs ---------- */
   const ov = $('overlay');
@@ -410,7 +487,7 @@ button:focus-visible{outline:3px solid var(--ink);outline-offset:2px}
     const reason = st.reason === 'pens' ? 'That’s your fourth penalty.' : st.reason === 'rows' ? 'Two rows are closed.' : 'Game ended.';
     openCard(`${header('Game over', 'no')}
       <p>${reason} Your final score:</p>${st.reason === 'ended' ? '' : '<p class="hint">Made a mistake? View the sheet and tap a box or penalty again to clear it.</p>'}
-      <div class="final">${scoreLine(st).replace(/<span class="op">(.)<\/span>/g, '$1')}</div>
+      <div class="final">${scoreLine(st, board()).replace(/<span class="op">(.)<\/span>/g, '$1')}</div>
       <div class="btns"><button class="btn primary" type="button" id="new">New game</button>${st.reason === 'ended' ? '<button class="btn" type="button" id="und">Resume game</button>' : ''}<button class="btn" type="button" id="no2">View sheet</button></div>`);
     $('new').onclick = () => { closeCard(); newGame(); };
     if (st.reason === 'ended') $('und').onclick = () => { closeCard(); resume(); };
@@ -425,15 +502,58 @@ button:focus-visible{outline:3px solid var(--ink);outline-offset:2px}
         <button class="btn" type="button" id="m-share">Share the app</button>
         <button class="btn" type="button" id="m-new">New game</button>
         ${st.reason === 'ended' ? '<button class="btn" type="button" id="m-end">Resume game</button>' : `<button class="btn" type="button" id="m-end" ${st.over ? 'disabled' : ''}>End game</button>`}
-        <button class="btn" type="button" disabled>Board: ${board().name} <small>more boards coming</small></button>
+        <button class="btn" type="button" id="m-board">Board: ${boardTitle(game.board)}</button>
       </div>
       <p class="hint">Qwixx Score v${APP_VERSION} · your game saves on this phone</p>`);
     $('no').onclick = closeCard;
     $('m-rules').onclick = () => rules(false);
     $('m-share').onclick = share;
+    $('m-board').onclick = boards;
     $('m-new').onclick = () => confirmBox('Start a new game?', 'This clears your sheet.', 'New game', newGame);
     $('m-end').onclick = st.reason === 'ended' ? () => { closeCard(); resume(); }
       : () => confirmBox('End the game?', 'Use this when another player takes their fourth penalty. You can resume it from here.', 'End game', () => act({ type: 'endGame' }));
+  }
+
+  /* ---------- Board picker ---------- */
+  function boards() {
+    const cur = game.board;
+    const opt = id => {
+      const bd = BOARDS[id], on = cur.id === id;
+      return id === 'shuffle' ? '' : `<button class="board-opt${on ? ' on' : ''}" type="button" data-id="${id}" aria-pressed="${on}">
+        <b>${bd.name}</b>${on ? '<small class="cur">Playing</small>' : ''}<span>${bd.blurb}</span></button>`;
+    };
+    openCard(`${header('Choose a board', 'no')}
+      <p class="hint">Everyone at the table should use the same board. Changing board starts a new game.</p>
+      <div class="board-list">${BOARD_ORDER.map(opt).join('')}
+        <div class="board-opt shuffle${cur.id === 'shuffle' ? ' on' : ''}">
+          <b>Shuffle</b>${cur.id === 'shuffle' ? `<small class="cur">Playing: ${cur.code}</small>` : ''}<span>${BOARDS.shuffle.blurb}</span>
+          <div class="code-row">
+            <button class="btn primary" type="button" id="b-new">New shuffle</button>
+            <input class="field code" id="b-code" maxlength="4" autocomplete="off" autocapitalize="characters" spellcheck="false" placeholder="CODE" aria-label="Shuffle code">
+            <button class="btn" type="button" id="b-join">Join</button>
+          </div>
+          <p class="status err" id="b-err" role="status"></p>
+        </div>
+      </div>`);
+    $('no').onclick = settings;
+    document.querySelectorAll('.board-opt[data-id]').forEach(el => el.addEventListener('click', () => pick({ id: el.dataset.id, code: null })));
+    $('b-new').onclick = () => pick({ id: 'shuffle', code: newCode() });
+    $('b-code').addEventListener('input', e => { e.target.value = e.target.value.toUpperCase().replace(/[^A-Z0-9]/g, ''); $('b-err').textContent = ''; });
+    $('b-join').onclick = () => {
+      const code = $('b-code').value.toUpperCase();
+      if (!validCode(code)) { $('b-err').textContent = 'Codes are 4 characters, like K7Q2. Check it with the player who started the shuffle.'; return; }
+      pick({ id: 'shuffle', code });
+    };
+  }
+  function pick(gb) {
+    const same = gb.id === game.board.id && (gb.code || null) === (game.board.code || null);
+    if (same) { closeCard(); return; }
+    const go = () => { closeCard(); newGame(gb); if (gb.id === 'shuffle') setTimeout(() => toast(`Shuffle code ${gb.code}: tell the table so they get the same sheet`), 1900); };
+    if (!game.actions.length) return go();
+    openCard(`<h2>Switch to ${boardTitle(gb)}?</h2><p>This starts a new game. Your current sheet will be cleared.</p>
+      <div class="btns"><button class="btn danger" type="button" id="ok">Switch board</button><button class="btn" type="button" id="no">Cancel</button></div>`);
+    $('ok').onclick = go;
+    $('no').onclick = boards;
   }
 
   function confirmBox(title, body, label, fn) {
@@ -464,6 +584,14 @@ button:focus-visible{outline:3px solid var(--ink);outline-offset:2px}
       <li>The game ends straight away when a player takes their fourth penalty, or when two rows are locked.</li>
       <li>The app ends the game for your own fourth penalty or the second closed row. If another player takes their fourth penalty, use <b>End game</b> in Settings.</li>
     </ul>
+    <h3>Boards</h3>
+    <p>Pick a board in Settings. The rules above apply to all of them; everyone at the table should use the same one.</p>
+    <ul>
+      <li><b>Classic</b>: the standard sheet.</li>
+      <li><b>Colour Mix</b>: numbers run in the usual order, but each row is split into coloured sections. A coloured die can only cross a box of its own colour (the white total can still cross any box). Each row locks through its last box, and that box\u2019s colour decides which die leaves the game.</li>
+      <li><b>Number Mix</b>: each row is one colour, but its numbers are jumbled. You still cross left to right, and the row locks on whatever number comes last.</li>
+      <li><b>Shuffle</b>: like Number Mix, but with a fresh jumble every time. One player taps <b>New shuffle</b> and reads out the code; everyone else types it in and taps <b>Join</b> to get the same sheet.</li>
+    </ul>
     <h3>Scoring</h3>
     <p>Each row scores by how many crosses it has, including the lock. Penalties are −5 each.</p>
     <div class="overflow"><table class="score-table"><tr><td>Crosses</td>${[1,2,3,4,5,6,7,8,9,10,11,12].map(n => `<td>${n}</td>`).join('')}</tr>
@@ -483,6 +611,10 @@ button:focus-visible{outline:3px solid var(--ink);outline-offset:2px}
     <p>You need 5 crosses in that row first. The counter on the box shows how many you have.</p>
     <h3>I tapped the wrong box</h3>
     <p>Tap it again to clear it. Crosses clear from the right, so in a row you clear the rightmost cross first. Taken penalties and rows you closed for someone else clear the same way.</p>
+    <h3>Where do I find the Shuffle code?</h3>
+    <p>It\u2019s next to the board name at the top of the screen, for example \u201cShuffle \u00b7 K7Q2\u201d. Codes never use the letters O or I, so there\u2019s no mixing them up with 0 or 1.</p>
+    <h3>Are Colour Mix and Number Mix the official Qwixx Mixx sheets?</h3>
+    <p>No. They\u2019re our own layouts that play the same way as the official Qwixx Mixx pads, so they won\u2019t match a printed Mixx pad box for box.</p>
     <h3>Do I need signal?</h3>
     <p>Only the first time you open it. After that it works offline, and your game is saved on this phone.</p>
     <h3>Which way up do I hold the phone?</h3>
