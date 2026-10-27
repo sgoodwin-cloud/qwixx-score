@@ -1,6 +1,6 @@
 // Bump VERSION whenever the app changes, together with APP_VERSION in index.html, to the same number:
 // the install checks they match.
-const VERSION = 'qwixx-score-v4';
+const VERSION = 'qwixx-score-v5';
 // Every file the app needs offline. Add any new file here.
 const CORE = [
   './', './index.html', './manifest.webmanifest',

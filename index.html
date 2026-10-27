@@ -89,7 +89,9 @@ button:focus-visible{outline:3px solid var(--ink);outline-offset:2px}
 .cell.wait{color:rgba(0,0,0,.25);text-shadow:none;transform:none;border:1.5px dashed rgba(0,0,0,.3);
   background:linear-gradient(0deg,color-mix(in srgb,var(--num) 22%,transparent) calc(var(--p,0)*100%),transparent 0),var(--tint);
   box-shadow:inset 0 1px 3px rgba(0,0,0,.12)}
-.cell.wait small{position:absolute;bottom:4%;font-size:min(20cqh,1.7cqw);font-weight:700;color:var(--deep);opacity:.7}
+/* number and counter stacked, so the counter never overlaps the number */
+.cell.wait{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3cqh;font-size:min(46cqh,3.8cqw)}
+.cell.wait small{font-size:min(18cqh,1.6cqw);line-height:1;font-weight:700;color:var(--deep);opacity:.75;letter-spacing:.04em}
 .cell.shake{animation:shake .25s}
 @keyframes shake{25%{transform:translateX(-4px)}75%{transform:translateX(4px)}}
 
@@ -198,7 +200,7 @@ button:focus-visible{outline:3px solid var(--ink);outline-offset:2px}
 <script>
 (function () {
   'use strict';
-  const APP_VERSION = '4';
+  const APP_VERSION = '5';
   const SAVE_VERSION = 1;
   const KEY = 'qwixx-score';
   const SHARE_URL = 'https://sgoodwin-cloud.github.io/qwixx-score/';
