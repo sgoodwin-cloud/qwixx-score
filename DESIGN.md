@@ -43,7 +43,7 @@ Last updated: 27 Oct 2026 (v7, Milestone 2 on the `m2` test branch)
 ```json
 {
   "saveVersion": 1,
-  "board": { "id": "classic", "code": null },          // or { "id": "shuffle", "code": "K7Q2" }
+  "board": { "id": "classic", "code": null },
   "actions": [
     { "type": "cross", "row": 0, "cell": 3 },
     { "type": "closeRow", "row": 2 },
@@ -53,7 +53,7 @@ Last updated: 27 Oct 2026 (v7, Milestone 2 on the `m2` test branch)
 }
 ```
 
-Rows and cells are positions, not numbers, so the same format works for jumbled boards. Clearing removes that item's action from the list. Future format changes go through `migrate()`.
+`board.id` is `classic`, `colourmix`, `numbermix` or `shuffle`; Shuffle saves its code too, e.g. `{ "id": "shuffle", "code": "K7Q2" }`. Rows and cells are positions, not numbers, so the same format works for jumbled boards. Clearing removes that item's action from the list. Future format changes go through `migrate()`.
 
 ## Rules the app enforces
 
