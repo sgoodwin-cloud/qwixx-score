@@ -1,6 +1,6 @@
 # Qwixx Score — design notes
 
-Last updated: 27 Oct 2026 (v5, on the `v2` test branch)
+Last updated: 27 Oct 2026 (v5, live)
 
 - Full design doc (Claude doc): https://claude.ai/artifact/YShyww3EHtMN2K7KNWo15Y
 - Design system: https://claude.ai/artifact/XMrnkNmjaX1AqYGjM2kxFz
@@ -11,7 +11,7 @@ Last updated: 27 Oct 2026 (v5, on the `v2` test branch)
 
 | Milestone | What | Status |
 | --- | --- | --- |
-| 1 | Classic board: crossing with rules enforced, undo, penalties, locks, score line, game end, settings with Rules & FAQ, Share, New game, End game; offline install and update bar | Live (v1); v2–v5 tweaks from play-test on the `v2` branch |
+| 1 | Classic board: crossing with rules enforced, undo, penalties, locks, score line, game end, settings with Rules & FAQ, Share, New game, End game; offline install and update bar | Live (v5): v1 plus play-test tweaks (one-tap lock, clearer penalties, tap-again to clear, always landscape) |
 | 2 | Board picker: Mixx A, Mixx B, Shuffle with board codes | Not started |
 | 3 | Big Points (six rows) | Not started |
 | 4 | Optional: paper tally mode, high score and history, dice roller | Not started |
@@ -77,6 +77,7 @@ Cross left to right; skipped cells grey out. The last cell needs 5 crosses in it
 | Date | Decision |
 | --- | --- |
 | 27 Oct 2026 | v1 released to `main` as the first release (Milestone 1) |
+| 27 Oct 2026 | v2–v5 merged to `main` after Stuart approved the preview |
 | 27 Oct 2026 | v5: the last number and its n/5 counter are stacked so the counter never overlaps the number |
 | 27 Oct 2026 | v4: always landscape: the app rotates itself when the phone reports portrait; the squeezed portrait layout is gone (Stuart) |
 | 27 Oct 2026 | v3: no Undo button; tap a marked box, penalty or lock again to clear it (Stuart). Crosses clear from the right only, to keep the 5-cross rule safe |
