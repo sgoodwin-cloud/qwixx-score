@@ -68,8 +68,13 @@ button:focus-visible{outline:3px solid var(--ink);outline-offset:2px}
 .green{--fill:var(--green);--on:#fff;--tint:var(--green-tint);--num:var(--green);--deep:var(--green-deep)}
 .blue{--fill:var(--blue);--on:#fff;--tint:var(--blue-tint);--num:var(--blue);--deep:var(--blue-deep)}
 .row.red{background:var(--red)} .row.yellow{background:var(--yellow)} .row.green{background:var(--green)} .row.blue{background:var(--blue)}
-.row.mixed{background:var(--mixed)}
-.row.mixed + .row.mixed{box-shadow:inset 0 1px 0 rgba(255,255,255,.12)}
+/* Colour Mix: each run of same-coloured boxes sits on its own full-colour band, like a classic row,
+   so the sections read at a glance; the lock sits on the colour of the last box */
+.row.mixed{background:var(--mixed);padding:0;gap:0}
+.seg{display:flex;align-items:stretch;min-width:0;gap:clamp(3px,.8cqw,8px);padding:clamp(3px,.7cqw,7px) clamp(3px,.55cqw,6px)}
+.seg.red{background:var(--red)} .seg.yellow{background:var(--yellow)} .seg.green{background:var(--green)} .seg.blue{background:var(--blue)}
+.seg:first-child{padding-left:clamp(4px,1cqw,10px)} .seg.lockseg{padding-left:0;padding-right:clamp(4px,1cqw,10px)}
+.row.mixed + .row.mixed .seg{box-shadow:inset 0 1px 0 rgba(0,0,0,.18)}
 
 /* open: a raised tile */
 .cell{flex:1 1 0;min-width:0;border-radius:clamp(5px,1.2cqw,9px);border:1px solid rgba(0,0,0,.2);
@@ -217,7 +222,7 @@ button:focus-visible{outline:3px solid var(--ink);outline-offset:2px}
 <script>
 (function () {
   'use strict';
-  const APP_VERSION = '7';
+  const APP_VERSION = '8';
   const SAVE_VERSION = 1;
   const KEY = 'qwixx-score';
   const SHARE_URL = 'https://sgoodwin-cloud.github.io/qwixx-score/';
@@ -380,7 +385,14 @@ button:focus-visible{outline:3px solid var(--ink);outline-offset:2px}
           }
         }
         c.addEventListener('click', () => tapCell(ri, ci, c));
-        el.appendChild(c);
+        if (row.colors) {
+          // start a new coloured section whenever the colour changes
+          if (!el.lastChild || !el.lastChild.classList.contains(cc)) {
+            const sg = document.createElement('div'); sg.className = 'seg ' + cc; el.appendChild(sg);
+          }
+          el.lastChild.style.flex = `${el.lastChild.children.length + 1} 1 0`;
+          el.lastChild.appendChild(c);
+        } else el.appendChild(c);
       });
       const lk = document.createElement('button');
       lk.type = 'button';
@@ -389,7 +401,10 @@ button:focus-visible{outline:3px solid var(--ink);outline-offset:2px}
       if (r.mine) lk.insertAdjacentHTML('beforeend', '<span class="bonus">+1</span>');
       lk.setAttribute('aria-label', r.closed ? `${rowLabel(row, ri)} closed` : `Close ${rowLabel(row, ri)}`);
       lk.addEventListener('click', () => tapLock(ri));
-      el.appendChild(lk);
+      if (row.colors) {
+        const ls = document.createElement('div'); ls.className = 'seg lockseg ' + cellColor(row, st.last);
+        ls.appendChild(lk); el.appendChild(ls);
+      } else el.appendChild(lk);
       sheet.appendChild(el);
     });
 

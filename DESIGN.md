@@ -1,6 +1,6 @@
 # Qwixx Score — design notes
 
-Last updated: 27 Oct 2026 (v7, Milestone 2 on the `m2` test branch)
+Last updated: 27 Oct 2026 (v8, Milestone 2 on the `m2` test branch)
 
 - Full design doc (Claude doc): https://claude.ai/artifact/YShyww3EHtMN2K7KNWo15Y
 - Design system: https://claude.ai/artifact/XMrnkNmjaX1AqYGjM2kxFz
@@ -12,7 +12,7 @@ Last updated: 27 Oct 2026 (v7, Milestone 2 on the `m2` test branch)
 | Milestone | What | Status |
 | --- | --- | --- |
 | 1 | Classic board: crossing with rules enforced, undo, penalties, locks, score line, game end, settings with Rules & FAQ, Share, New game, End game; offline install and update bar | Live (v6): v1 plus play-test tweaks (one-tap lock, clearer penalties, tap-again to clear, always landscape, share message with install steps) |
-| 2 | Board picker: Colour Mix, Number Mix, Shuffle with board codes | Built (v7) on `m2`, awaiting Stuart's play-test |
+| 2 | Board picker: Colour Mix, Number Mix, Shuffle with board codes | Built (v8) on `m2`, awaiting Stuart's play-test |
 | 3 | Big Points (six rows) | Not started |
 | 4 | Optional: paper tally mode, high score and history, dice roller | Not started |
 
@@ -79,6 +79,7 @@ Cross left to right; skipped cells grey out. The last cell needs 5 crosses in it
 | Date | Decision |
 | --- | --- |
 | 27 Oct 2026 | v1 released to `main` as the first release (Milestone 1) |
+| 27 Oct 2026 | v8: Colour Mix sections each sit on their own full-colour band (`.seg`), with the lock on its colour, so the colours read at a glance (Stuart) |
 | 27 Oct 2026 | v7 (Milestone 2): board picker with Colour Mix, Number Mix and Shuffle (4-character codes); original layouts rather than copies of the Mixx pads; Colour Mix rows on a dark band with ink score chips |
 | 27 Oct 2026 | v6: Share copies (and Send shares) a full message: the link plus iPhone and Android home-screen steps (Stuart) |
 | 27 Oct 2026 | v2–v5 merged to `main` after Stuart approved the preview |
