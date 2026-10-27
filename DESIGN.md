@@ -1,6 +1,6 @@
 # Qwixx Score — design notes
 
-Last updated: 27 Oct 2026 (v6, on the `v6` test branch)
+Last updated: 27 Oct 2026 (v6, live)
 
 - Full design doc (Claude doc): https://claude.ai/artifact/YShyww3EHtMN2K7KNWo15Y
 - Design system: https://claude.ai/artifact/XMrnkNmjaX1AqYGjM2kxFz
@@ -11,7 +11,7 @@ Last updated: 27 Oct 2026 (v6, on the `v6` test branch)
 
 | Milestone | What | Status |
 | --- | --- | --- |
-| 1 | Classic board: crossing with rules enforced, undo, penalties, locks, score line, game end, settings with Rules & FAQ, Share, New game, End game; offline install and update bar | Live (v5): v1 plus play-test tweaks (one-tap lock, clearer penalties, tap-again to clear, always landscape) |
+| 1 | Classic board: crossing with rules enforced, undo, penalties, locks, score line, game end, settings with Rules & FAQ, Share, New game, End game; offline install and update bar | Live (v6): v1 plus play-test tweaks (one-tap lock, clearer penalties, tap-again to clear, always landscape, share message with install steps) |
 | 2 | Board picker: Mixx A, Mixx B, Shuffle with board codes | Not started |
 | 3 | Big Points (six rows) | Not started |
 | 4 | Optional: paper tally mode, high score and history, dice roller | Not started |
