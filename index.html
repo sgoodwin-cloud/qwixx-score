@@ -112,9 +112,12 @@ button:focus-visible{outline:3px solid var(--ink);outline-offset:2px}
 .chip.p,.chip.t{border-color:var(--ink);color:var(--ink)}
 .chip.t{min-width:72px;height:44px;font-size:30px;font-weight:800}
 .pens{display:flex;align-items:center;gap:6px}
-.pen{width:46px;height:44px;border-radius:8px;border:2px solid var(--ink);background:var(--sheet);display:grid;place-items:center;
-  font-size:17px;font-weight:600;color:var(--muted)}
-.pen svg{width:60%;height:60%;color:var(--ink)}
+.pen{width:46px;height:44px;border-radius:8px;border:2px dashed var(--muted);background:transparent;display:grid;place-items:center;
+  font-size:16px;font-weight:600;color:var(--muted)}
+.pen:not(:disabled):active{background:var(--sheet)}
+/* taken: solid red with a white X, so it can't be mistaken for an empty box */
+.pen.on{border:2px solid var(--red-deep);background:var(--red);color:#fff;box-shadow:inset 0 2px 4px rgba(0,0,0,.25)}
+.pen svg{width:60%;height:60%}
 .pen:disabled{cursor:default}
 
 /* toast */
@@ -205,7 +208,7 @@ button:focus-visible{outline:3px solid var(--ink);outline-offset:2px}
 <script>
 (function () {
   'use strict';
-  const APP_VERSION = '1';
+  const APP_VERSION = '2';
   const SAVE_VERSION = 1;
   const KEY = 'qwixx-score';
   const SHARE_URL = 'https://sgoodwin-cloud.github.io/qwixx-score/';
@@ -323,8 +326,9 @@ button:focus-visible{outline:3px solid var(--ink);outline-offset:2px}
     pens.textContent = '';
     for (let i = 0; i < 4; i++) {
       const p = document.createElement('button');
-      p.type = 'button'; p.className = 'pen';
+      p.type = 'button';
       const on = i < st.pens;
+      p.className = 'pen' + (on ? ' on' : '');
       p.innerHTML = on ? X_SVG : '−5';
       p.setAttribute('aria-label', on ? `Penalty ${i + 1}, taken` : `Take penalty ${i + 1}`);
       p.disabled = on || st.over;
@@ -357,17 +361,12 @@ button:focus-visible{outline:3px solid var(--ink);outline-offset:2px}
     act({ type: 'cross', row: ri, cell: ci }, msg);
   }
 
+  // One tap closes the row for another player's lock; Undo reopens it.
   function tapLock(ri) {
     const st = state(), row = board().rows[ri], color = row.color;
     if (st.rows[ri].closed) { toast(`The ${color} row is closed`); return; }
     if (st.over) { toast('The game is over'); return; }
-    openCard(`
-      <div class="topcard"><h2>Close the ${color} row?</h2></div>
-      <p>Use this when another player locks ${color}. You don’t get the lock cross, and you can’t cross any more ${color} numbers.</p>
-      <p>Locking it yourself? Tap the ${row.nums[st.last]} instead.</p>
-      <div class="btns"><button class="btn primary" type="button" id="ok">Close ${color} row</button><button class="btn" type="button" id="no">Cancel</button></div>`);
-    $('ok').onclick = () => { closeCard(); act({ type: 'closeRow', row: ri }, `${cap(color)} row closed`); };
-    $('no').onclick = closeCard;
+    act({ type: 'closeRow', row: ri }, `${cap(color)} row closed \u00b7 Undo to reopen`);
   }
 
   function undo() {
